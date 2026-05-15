@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Jobsy – Elevate Your Career Path. Find jobs or hire talent."/>
+  <title>Jobsy – Elevate Your Career Path</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <link rel="stylesheet" href="css/forms.css"/>
+</head>
+<body>
+
+    <!-- ═══════════════════════════════════════
+         NAVBAR
+    ════════════════════════════════════════ -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">Job<span>sy</span></div>
+
+            <!-- Desktop nav -->
+            <div class="nav-links">
+                <button class="nav-link active" data-page="home" onclick="showPage('home')">Home</button>
+                <button class="nav-link" data-page="jobseeker" onclick="showPage('jobseeker')">Jobseeker</button>
+                <button class="nav-link" data-page="employer" onclick="showPage('employer')">Employer</button>
+                <button class="nav-link btn-login" data-page="login" onclick="showPage('login')">Login</button>
+                <div id="user-area" class="user-area"> <span id="welcome-user"></span> <button id="logout-btn" class="btn-secondary" onclick="logout()"> Logout </button> </div>
+            </div>
+
+            <!-- Mobile hamburger -->
+            <button class="hamburger" onclick="toggleMobileNav()" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile nav -->
+    <div class="nav-mobile" id="navMobile">
+        <button class="nav-link" onclick="showPage('home')">🏠 Home</button>
+        <button class="nav-link" onclick="showPage('jobseeker')">👤 Jobseeker</button>
+        <button class="nav-link" onclick="showPage('employer')">🏢 Employer</button>
+        <button class="nav-link" onclick="showPage('login')">🔐 Login</button>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         PAGE: HOME
+    ════════════════════════════════════════ -->
+    <div id="page-home" class="page active">
+
+        <!-- Hero -->
+        <section class="hero">
+            <div class="hero-badge">🚀 2026's Most Trusted Job Portal</div>
+            <h1>Elevate Your<br><span class="accent">Career Path</span></h1>
+            <p>Discover opportunities from top companies around the world and find talent that fits perfectly.</p>
+            <div class="search-box">
+                <input type="text" id="searchJob" placeholder="Search jobs, skills, companies…" />
+                <input type="text" id="searchLoc" placeholder="Location" style="max-width:200px;" />
+                <button class="btn-search" onclick="handleSearch()">🔍 Search</button>
+            </div>
+        </section>
+
+        <!-- Stats -->
+        <div class="stats-row">
+            <div class="stats-inner">
+                <div class="stat"><div class="stat-num">12,400+</div><div class="stat-label">Active Jobs</div></div>
+                <div class="stat"><div class="stat-num">3,200+</div><div class="stat-label">Companies</div></div>
+                <div class="stat"><div class="stat-num">98K+</div><div class="stat-label">Candidates</div></div>
+                <div class="stat"><div class="stat-num">4.8★</div><div class="stat-label">Avg Rating</div></div>
+            </div>
+        </div>
+
+        <!-- Jobs Section -->
+        <div class="section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title" id="sectionTitle">Featured Jobs</h2>
+                    <span class="section-link" onclick="showPage('jobseeker')">Post your profile →</span>
+                </div>
+
+                <!-- Category filter -->
+                <div class="categories">
+                    <button class="cat-pill active" onclick="filterCategory(this,'all')">All</button>
+                    <button class="cat-pill" onclick="filterCategory(this,'react')">Frontend</button>
+                    <button class="cat-pill" onclick="filterCategory(this,'node')">Backend</button>
+                    <button class="cat-pill" onclick="filterCategory(this,'python')">Data / AI</button>
+                    <button class="cat-pill" onclick="filterCategory(this,'devops')">DevOps</button>
+                    <button class="cat-pill" onclick="filterCategory(this,'figma')">Design</button>
+                    <button class="cat-pill" onclick="filterCategory(this,'marketing')">Marketing</button>
+                </div>
+
+                <div class="jobs-grid" id="jobsGrid">
+                    <!-- Rendered by JS -->
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /page-home -->
+    <!-- ═══════════════════════════════════════
+         PAGE: JOBSEEKER
+    ════════════════════════════════════════ -->
+    <div id="page-jobseeker" class="page">
+        <div class="form-page">
+
+            <div class="form-header">
+                <h2>Create Your Profile</h2>
+                <p>Whether you're starting fresh or leveling up — we'll find your perfect match.</p>
+            </div>
+
+            <!-- Tab switch -->
+            <div class="tab-switch">
+                <button class="tab-btn active" id="tab-fresher" onclick="switchTab('fresher')">🎓 Fresher</button>
+                <button class="tab-btn" id="tab-experienced" onclick="switchTab('experienced')">💼 Experienced</button>
+            </div>
+
+            <div class="form-card">
+
+                <!-- ─── FRESHER FORM ─── -->
+                <div id="form-fresher">
+                    <div class="field-divider">Personal Information</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="f-name">Full Name <span class="req">*</span></label>
+                            <input type="text" id="f-name" placeholder="e.g. Rahul Sharma" autocomplete="name" />
+                        </div>
+                        <div class="form-group">
+                            <label for="f-email">Email Address <span class="req">*</span></label>
+                            <input type="email" id="f-email" placeholder="you@example.com" autocomplete="email" />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="f-phone">Phone Number <span class="req">*</span></label>
+                            <input type="tel" id="f-phone" placeholder="9876543210" maxlength="10" />
+                        </div>
+                        <div class="form-group">
+                            <label for="f-uan">UAN <span class="req">*</span> <span class="hint">(12-digit Universal Account No.)</span></label>
+                            <input type="text" id="f-uan" placeholder="123456789012" maxlength="12" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="f-address">Address <span class="req">*</span></label>
+                        <textarea id="f-address" placeholder="Street, City, State, PIN Code" rows="3"></textarea>
+                    </div>
+
+                    <div class="field-divider">Education</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="f-qual">Highest Qualification <span class="req">*</span></label>
+                            <select id="f-qual">
+                                <option value="">Select qualification</option>
+                                <option>10th / SSLC</option>
+                                <option>12th / HSC</option>
+                                <option>Diploma</option>
+                                <option>B.E / B.Tech</option>
+                                <option>B.Sc</option>
+                                <option>BCA / BCS</option>
+                                <option>MBA</option>
+                                <option>MCA</option>
+                                <option>M.Tech</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="f-year">Year of Passing <span class="req">*</span></label>
+                            <select id="f-year">
+                                <option value="">Select year</option>
+                                <option>2026</option>
+                                <option>2025</option>
+                                <option>2024</option>
+                                <option>2023</option>
+                                <option>2022</option>
+                                <option>2021</option>
+                                <option>2020 or earlier</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="f-percent">Percentage / CGPA</label>
+                            <input type="text" id="f-percent" placeholder="e.g. 8.5 CGPA or 85%" />
+                        </div>
+                        <div class="form-group">
+                            <label for="f-college">College / Institution</label>
+                            <input type="text" id="f-college" placeholder="e.g. Anna University" />
+                        </div>
+                    </div>
+
+                    <div class="field-divider">Career Preferences</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="f-role">Preferred Job Role <span class="req">*</span></label>
+                            <input type="text" id="f-role" placeholder="e.g. Software Developer, Data Analyst" />
+                        </div>
+                        <div class="form-group">
+                            <label for="f-salary">Expected Salary <span class="req">*</span></label>
+                            <select id="f-salary">
+                                <option value="">Select salary range</option>
+                                <option>Below ₹15,000 / month</option>
+                                <option>₹15,000 – ₹25,000 / month</option>
+                                <option>₹25,000 – ₹40,000 / month</option>
+                                <option>₹40,000 – ₹60,000 / month</option>
+                                <option>₹60,000 – ₹80,000 / month</option>
+                                <option>Above ₹80,000 / month</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Skills <span class="req">*</span> <span class="hint">(type a skill and press Enter)</span></label>
+                        <div class="skills-wrap" id="f-skills-wrap" onclick="document.getElementById('f-skill-input').focus()">
+                            <input id="f-skill-input" type="text" placeholder="e.g. Python, React…" onkeydown="addSkill(event,'fresher')" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="f-pref-loc">Preferred Work Location</label>
+                        <input type="text" id="f-pref-loc" placeholder="e.g. Chennai, Bangalore, Remote" />
+                    </div>
+                </div><!-- /fresher -->
+                <!-- ─── EXPERIENCED FORM ─── -->
+                <div id="form-experienced" class="hidden">
+                    <div class="field-divider">Personal Information</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="e-name">Full Name <span class="req">*</span></label>
+                            <input type="text" id="e-name" placeholder="e.g. Priya Nair" autocomplete="name" />
+                        </div>
+                        <div class="form-group">
+                            <label for="e-email">Email Address <span class="req">*</span></label>
+                            <input type="email" id="e-email" placeholder="you@example.com" autocomplete="email" />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="e-phone">Phone Number <span class="req">*</span></label>
+                            <input type="tel" id="e-phone" placeholder="9876543210" maxlength="10" />
+                        </div>
+                        <div class="form-group">
+                            <label for="e-uan">UAN <span class="req">*</span> <span class="hint">(12-digit)</span></label>
+                            <input type="text" id="e-uan" placeholder="123456789012" maxlength="12" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="e-address">Address <span class="req">*</span></label>
+                        <textarea id="e-address" placeholder="Street, City, State, PIN Code" rows="3"></textarea>
+                    </div>
+
+                    <div class="field-divider">Work Experience</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="e-company">Current / Last Company <span class="req">*</span></label>
+                            <input type="text" id="e-company" placeholder="e.g. Infosys, TCS, Wipro" />
+                        </div>
+                        <div class="form-group">
+                            <label for="e-jobtitle">Current / Last Job Title <span class="req">*</span></label>
+                            <input type="text" id="e-jobtitle" placeholder="e.g. Senior Developer" />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="e-exp">Total Experience <span class="req">*</span></label>
+                            <select id="e-exp">
+                                <option value="">Select experience</option>
+                                <option value="1">1 year</option>
+                                <option value="2">2 years</option>
+                                <option value="3">3 years</option>
+                                <option value="4">4 years</option>
+                                <option value="5">5 years</option>
+                                <option value="6">6 – 8 years</option>
+                                <option value="9">9 – 12 years</option>
+                                <option value="13">12+ years</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="e-notice">Notice Period</label>
+                            <select id="e-notice">
+                                <option value="">Select notice period</option>
+                                <option>Immediate joiner</option>
+                                <option>15 days</option>
+                                <option>30 days</option>
+                                <option>60 days</option>
+                                <option>90 days</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="e-curr-sal">Current Salary <span class="req">*</span></label>
+                            <select id="e-curr-sal">
+                                <option value="">Select current salary</option>
+                                <option>Below ₹30,000 / month</option>
+                                <option>₹30,000 – ₹50,000 / month</option>
+                                <option>₹50,000 – ₹80,000 / month</option>
+                                <option>₹80,000 – ₹1,20,000 / month</option>
+                                <option>₹1,20,000 – ₹2,00,000 / month</option>
+                                <option>Above ₹2,00,000 / month</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="e-salary">Expected Salary <span class="req">*</span></label>
+                            <select id="e-salary">
+                                <option value="">Select expected salary</option>
+                                <option>₹30,000 – ₹50,000 / month</option>
+                                <option>₹50,000 – ₹80,000 / month</option>
+                                <option>₹80,000 – ₹1,20,000 / month</option>
+                                <option>₹1,20,000 – ₹2,00,000 / month</option>
+                                <option>Above ₹2,00,000 / month</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="field-divider">Skills & Preferences</div>
+                    <div class="form-group">
+                        <label>Skills <span class="req">*</span> <span class="hint">(type a skill and press Enter)</span></label>
+                        <div class="skills-wrap" id="e-skills-wrap" onclick="document.getElementById('e-skill-input').focus()">
+                            <input id="e-skill-input" type="text" placeholder="e.g. React, Node.js, AWS…" onkeydown="addSkill(event,'experienced')" />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="e-role">Preferred Job Role</label>
+                            <input type="text" id="e-role" placeholder="e.g. Tech Lead, Project Manager" />
+                        </div>
+                        <div class="form-group">
+                            <label for="e-pref-loc">Preferred Location</label>
+                            <input type="text" id="e-pref-loc" placeholder="e.g. Hyderabad, Remote" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="e-about">About You</label>
+                        <textarea id="e-about" placeholder="Briefly describe your experience, strengths, and career goals (2–4 sentences)…" rows="4"></textarea>
+                    </div>
+                </div><!-- /experienced -->
+
+                <button class="btn-submit" onclick="submitJobseeker()">
+                    🚀 Submit My Profile
+                </button>
+            </div><!-- /form-card -->
+            <div class="dashboard-section">
+
+                <h2>Candidate Dashboard</h2>
+
+                <!-- PROFILE -->
+                <div class="dashboard-card">
+
+                    <h3>Profile</h3>
+
+                    <div id="candidate-profile">
+
+                        Loading profile...
+
+                    </div>
+                </div>
+
+                <!-- RESUME -->
+                <div class="dashboard-card">
+
+                    <h3>Upload Resume</h3>
+
+                    <input type="file"
+                           id="resume-file"
+                           accept=".pdf">
+
+                    <button class="btn-primary"
+                            onclick="uploadResume()">
+
+                        Upload Resume
+
+                    </button>
+
+                    <div id="resume-status"></div>
+                </div>
+
+                <!-- APPLICATIONS -->
+                <div class="dashboard-card">
+
+                    <h3>Applied Jobs</h3>
+
+                    <div id="applied-jobs">
+
+                        No applications yet
+
+                    </div>
+                </div>
+            </div>
+        </div><!-- /form-page -->
+    </div><!-- /page-jobseeker -->
+    <!-- ═══════════════════════════════════════
+         PAGE: EMPLOYER
+    ════════════════════════════════════════ -->
+    <div id="page-employer" class="page">
+        <div class="employer-layout">
+
+            <!-- Left: Post Requirements -->
+            <div class="employer-post-card">
+                <h2>📋 Post Job Requirements</h2>
+
+                <div class="form-group">
+                    <label for="emp-company">Company Name <span class="req">*</span></label>
+                    <input type="text" id="emp-company" placeholder="e.g. TechCorp Solutions" />
+                </div>
+                <div class="form-group">
+                    <label for="emp-jobtitle">Job Title <span class="req">*</span></label>
+                    <input type="text" id="emp-jobtitle" placeholder="e.g. React Developer, Data Analyst" />
+                </div>
+                <div class="form-group">
+                    <label for="emp-type">Candidate Type <span class="req">*</span></label>
+                    <select id="emp-type">
+                        <option value="">Select type</option>
+                        <option value="fresher">Fresher only</option>
+                        <option value="experienced">Experienced only</option>
+                        <option value="both">Both (Fresher & Experienced)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Required Skills <span class="req">*</span> <span class="hint">(press Enter after each)</span></label>
+                    <div class="skills-wrap" id="emp-skills-wrap" onclick="document.getElementById('emp-skill-input').focus()">
+                        <input id="emp-skill-input" type="text" placeholder="e.g. Python, React, SQL…" onkeydown="addSkill(event,'employer')" />
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="emp-exp">Minimum Experience</label>
+                        <select id="emp-exp">
+                            <option value="0">Fresher / No requirement</option>
+                            <option value="1">1+ year</option>
+                            <option value="2">2+ years</option>
+                            <option value="3">3+ years</option>
+                            <option value="5">5+ years</option>
+                            <option value="8">8+ years</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="emp-location">Job Location</label>
+                        <input type="text" id="emp-location" placeholder="e.g. Chennai, Remote" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="emp-salary">Salary Offered</label>
+                    <select id="emp-salary">
+                        <option value="">Select range</option>
+                        <option>Below ₹25,000 / month</option>
+                        <option>₹25,000 – ₹50,000 / month</option>
+                        <option>₹50,000 – ₹1,00,000 / month</option>
+                        <option>₹1,00,000 – ₹2,00,000 / month</option>
+                        <option>Above ₹2,00,000 / month</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="emp-desc">Job Description</label>
+                    <textarea id="emp-desc" placeholder="Describe the role, responsibilities, required qualifications, and any perks…" rows="4"></textarea>
+                </div>
+
+                <button class="btn-submit" onclick="findCandidates()">
+                    🔍 Find Matching Candidates
+                </button>
+            </div>
+
+            <!-- Right: Candidates -->
+            <div>
+                <div class="candidates-header" id="candidatesHeader">
+                    <h2>Matching Candidates</h2>
+                </div>
+                <div id="candidatesList">
+                    <div class="empty-state">
+                        <div class="empty-icon">🎯</div>
+                        <p>Fill in your requirements on the left and click <strong>"Find Matching Candidates"</strong> to see the best talent.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div class="dashboard-section">
+
+            <h2>Employer Dashboard</h2>
+
+            <!-- JOBS -->
+            <div class="dashboard-card">
+
+                <h3>Posted Jobs</h3>
+
+                <div id="employer-jobs">
+
+                    No jobs posted yet
+
+                </div>
+            </div>
+
+            <!-- APPLICANTS -->
+            <div class="dashboard-card">
+
+                <h3>Applicants</h3>
+
+                <div id="employer-applicants">
+
+                    No applicants yet
+
+                </div>
+            </div>
+        </div>
+    </div><!-- /page-employer -->
+    <!-- ═══════════════════════════════════════
+         PAGE: ADMIN
+    ════════════════════════════════════════ -->
+   
+    <div id="page-admin" class="page">
+
+        <div class="dashboard-section">
+
+            <h2>Admin Dashboard</h2>
+
+            <!-- ANALYTICS -->
+            <div class="admin-stats">
+
+                <div class="dashboard-card">
+
+                    <h3>Total Users</h3>
+
+                    <div id="admin-users-count">
+
+                        0
+
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+
+                    <h3>Total Jobs</h3>
+
+                    <div id="admin-jobs-count">
+
+                        0
+
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+
+                    <h3>Total Applications</h3>
+
+                    <div id="admin-applications-count">
+
+                        0
+
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+
+                    <h3>Total Candidates</h3>
+
+                    <div id="admin-candidates-count">
+
+                        0
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- USERS -->
+            <div class="dashboard-card">
+
+                <h3>Users</h3>
+
+                <div id="admin-users-list">
+
+                    Loading...
+
+                </div>
+            </div>
+
+            <!-- JOBS -->
+            <div class="dashboard-card">
+
+                <h3>Jobs</h3>
+
+                <div id="admin-jobs-list">
+
+                    Loading...
+
+                </div>
+            </div>
+
+            <!-- APPLICATIONS -->
+            <div class="dashboard-card">
+
+                <h3>Applications</h3>
+
+                <div id="admin-applications-list">
+
+                    Loading...
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ═══════════════════════════════════════
+         PAGE: LOGIN
+    ════════════════════════════════════════ -->
+    <div id="page-login" class="page">
+        <div class="login-page">
+            <div class="login-card">
+                <div class="login-logo">Job<span>sy</span></div>
+                <h2>Welcome Back 👋</h2>
+                <p class="sub">Sign in to access your dashboard</p>
+
+                <!-- Role toggle -->
+                <div class="role-toggle">
+                    <button class="role-btn active" onclick="selectRole(this,'jobseeker/Employer')">👤 Jobseeker/🏢 Employer</button>
+                    <!--<button class="role-btn" onclick="selectRole(this,'employer')">🏢 Employer</button>-->
+                </div>
+
+                <div class="form-group">
+                    <label for="login-email">Email Address <span class="req">*</span></label>
+                    <input type="email" id="login-email" placeholder="you@example.com" autocomplete="email" />
+                </div>
+                <div class="form-group">
+                    <label for="login-pass">Password <span class="req">*</span></label>
+                    <div class="input-group">
+                        <input type="password" id="login-pass" placeholder="Enter password" autocomplete="current-password" />
+                        <button class="toggle-pass" type="button" onclick="togglePassword('login-pass')" title="Toggle password">👁</button>
+                    </div>
+                </div>
+                <span class="forgot-link">Forgot password?</span>
+
+                <button class="btn-submit" onclick="handleLogin()">
+                    🔐 Login
+                </button>
+
+                <div class="login-footer">
+                    Don't have an account?
+                    <a onclick="showPage('jobseeker')">Register as Jobseeker</a>
+                    &nbsp;|&nbsp;
+                    <a onclick="showPage('employer')">Register as Employer</a>
+                </div>
+
+                <!-- Demo hint -->
+                <div style="margin-top:1.5rem;padding:1rem;background:var(--gray-50);border-radius:10px;border:1px solid var(--gray-200);">
+                    <p style="font-size:.8rem;color:var(--gray-500);text-align:center;line-height:1.7;">
+                        <!--<strong>Demo Credentials</strong><br />
+                        Jobseeker: jobseeker@demo.com / demo123<br />
+                        Employer: employer@demo.com / demo123-->
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div><!-- /page-login -->
+    <!-- ═══════════════════════════════════════
+         FOOTER
+    ════════════════════════════════════════ -->
+    <footer class="footer">
+        <p>© 2026 <span>Jobsy</span>. All rights reserved. Built with ❤️ for job seekers & employers.</p>
+    </footer>
+
+    <!-- ═══════════════════════════════════════
+         TOAST
+    ════════════════════════════════════════ -->
+    <div class="toast" id="toast"></div>
+
+    <!-- ═══════════════════════════════════════
+         MODAL
+    ════════════════════════════════════════ -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal-box">
+            <div class="modal-icon">✅</div>
+            <h3 id="modalTitle">Success!</h3>
+            <p id="modalMsg">Your action was completed successfully.</p>
+            <button class="btn-modal" onclick="closeModal()">Got it!</button>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
