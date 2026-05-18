@@ -20,7 +20,6 @@ function showPage(pageId) {
     if (target) {
         target.classList.add('active');
     }
-
     document.querySelectorAll('.nav-link[data-page]').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.page === pageId);
     });
@@ -31,6 +30,63 @@ function showPage(pageId) {
         top: 0,
         behavior: 'smooth'
     });
+}
+
+/* REGISTER */
+async function handleRegister() {
+    try {
+        const name = document.getElementById('register-name')?.value.trim();
+        const email = document.getElementById('register-email')?.value.trim();
+        const password = document.getElementById('register-pass')?.value.trim();
+        const role = document.getElementById('register-role')?.value;
+
+        if (!name || !email || !password || !role) {
+            showToast('Please fill all fields', 'error');
+            return;
+        }
+
+        if (!validateEmail(email)) {
+            showToast('Invalid email', 'error');
+            return;
+        }
+
+        const payload = {
+            FullName: name,
+            Email: email,
+            Password: password,
+            Role: role
+        };
+
+        const resp = await fetch(`${API_BASE_URL}/Auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!resp.ok) {
+            const t = await resp.text();
+            showToast(t || 'Registration failed', 'error');
+            return;
+        }
+
+        // Store basic info so we can show the correct page immediately
+        localStorage.setItem('role', role);
+        localStorage.setItem('name', name);
+
+        showToast('Account created successfully', 'success');
+
+        // Update navbar (will still hide user-area without token)
+        try { updateNavbar(); } catch (_) {}
+
+        // Navigate to appropriate page
+        if (role === 'jobseeker') showPage('jobseeker');
+        else if (role === 'employer') showPage('employer');
+        else showPage('login');
+
+    } catch (error) {
+        console.error(error);
+        showToast('Registration failed', 'error');
+    }
 }
 
 /* TOAST */
@@ -76,6 +132,12 @@ function closeModal() {
 function toggleMobileNav() {
 
     document.getElementById('navMobile')?.classList.toggle('open');
+}
+
+function togglePassword(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.type === 'password') el.type = 'text'; else el.type = 'password';
 }
 
 /* SKILLS */
@@ -286,7 +348,7 @@ function submitJobseeker() {
     }
 
     const salary =
-        document.getElementById(`${ p } -salary`)?.value;
+        document.getElementById(`${p}-salary`)?.value;
 
     const skills =
         Skills[isFresher ? 'fresher' : 'experienced'];
@@ -1305,22 +1367,22 @@ async function applyJob(jobId, jobTitle) {
     JSON.stringify(application)
 });
 
-if (!response.ok) {
+        if (!response.ok) {
+            const message = await response.text();
+            throw new Error(message);
+        }
 
-    const message = await response.text(); throw new Error(message);
-}
-
-        showToast(error.message, "error");
+        showToast('Applied successfully', 'success');
 
     } catch (error) {
 
-    console.error(error);
+        console.error(error);
 
-    showToast(
-        "Failed to apply",
-        "error"
-    );
-}
+        showToast(
+            error.message || 'Failed to apply',
+            'error'
+        );
+    }
 }
 
 /* INIT */
