@@ -6,4 +6,3 @@ node_modules/
 *.suo
 *.cache
 *.pdb
-appsettings.Development.json
