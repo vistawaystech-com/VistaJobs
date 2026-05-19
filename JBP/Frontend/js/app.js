@@ -393,13 +393,14 @@ function submitJobseeker() {
 
         candidateType: isFresher ? "fresher" : "experienced",
     };
-
-    fetch(`${ API_BASE_URL }/Candidates`, {
+    const token = localStorage.getItem("token");
+    fetch(`${API_BASE_URL}/Candidates`, {
 
 method: 'POST',
 
     headers: {
-    'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
 },
 
 body: JSON.stringify(newCandidate)
@@ -606,7 +607,13 @@ async function handleLogin() {
             throw new Error("Invalid login");
         }
 
-        const data = await response.json();
+        let data = {};
+
+        try {
+            data = await response.json();
+        } catch {
+            data = {};
+        }
 
         // Store JWT Token
         localStorage.setItem(
@@ -1249,6 +1256,7 @@ function renderJobs(jobs) {
         document.getElementById(
             "jobsGrid"
         );
+    if (!container) return;
 
     if (!jobs.length) {
 
