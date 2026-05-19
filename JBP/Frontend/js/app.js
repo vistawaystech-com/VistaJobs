@@ -20,6 +20,7 @@ function showPage(pageId) {
     if (target) {
         target.classList.add('active');
     }
+
     document.querySelectorAll('.nav-link[data-page]').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.page === pageId);
     });
@@ -30,63 +31,6 @@ function showPage(pageId) {
         top: 0,
         behavior: 'smooth'
     });
-}
-
-/* REGISTER */
-async function handleRegister() {
-    try {
-        const name = document.getElementById('register-name')?.value.trim();
-        const email = document.getElementById('register-email')?.value.trim();
-        const password = document.getElementById('register-pass')?.value.trim();
-        const role = document.getElementById('register-role')?.value;
-
-        if (!name || !email || !password || !role) {
-            showToast('Please fill all fields', 'error');
-            return;
-        }
-
-        if (!validateEmail(email)) {
-            showToast('Invalid email', 'error');
-            return;
-        }
-
-        const payload = {
-            FullName: name,
-            Email: email,
-            Password: password,
-            Role: role
-        };
-
-        const resp = await fetch(`${API_BASE_URL}/Auth/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        if (!resp.ok) {
-            const t = await resp.text();
-            showToast(t || 'Registration failed', 'error');
-            return;
-        }
-
-        // Store basic info so we can show the correct page immediately
-        localStorage.setItem('role', role);
-        localStorage.setItem('name', name);
-
-        showToast('Account created successfully', 'success');
-
-        // Update navbar (will still hide user-area without token)
-        try { updateNavbar(); } catch (_) {}
-
-        // Navigate to appropriate page
-        if (role === 'jobseeker') showPage('jobseeker');
-        else if (role === 'employer') showPage('employer');
-        else showPage('login');
-
-    } catch (error) {
-        console.error(error);
-        showToast('Registration failed', 'error');
-    }
 }
 
 /* TOAST */
@@ -132,12 +76,6 @@ function closeModal() {
 function toggleMobileNav() {
 
     document.getElementById('navMobile')?.classList.toggle('open');
-}
-
-function togglePassword(id) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    if (el.type === 'password') el.type = 'text'; else el.type = 'password';
 }
 
 /* SKILLS */
@@ -302,11 +240,15 @@ function validatePhone(phone) {
 
     return /^[6-9]\d{9}$/.test(phone);
 }
-
-function validateUAN(uan) {
-
-    return /^\d{12}$/.test(uan);
+function validatePAN(pan) {
+    return /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(pan);
 }
+
+function validateAadhaar(aadhaar) {
+    return /^\d{12}$/.test(aadhaar);
+}
+
+
 
 /* SUBMIT JOBSEEKER */
 function submitJobseeker() {
@@ -328,7 +270,11 @@ function submitJobseeker() {
 
     let email = "";
     let phone = "";
+    let dob = "";
+    let pan = "";
+    let aadhaar = "";
     let uan = "";
+    
 
     if (isFresher) {
 
@@ -336,7 +282,16 @@ function submitJobseeker() {
 
         phone = document.getElementById("f-phone").value.trim();
 
-        uan = document.getElementById("f-uan").value.trim();
+        dob = document.getElementById("f-dob").value;
+
+        pan = document.getElementById("f-pan")
+            .value.trim()
+            .toUpperCase();
+
+        aadhaar = document.getElementById("f-aadhaar")
+            .value.trim();
+
+        
 
     } else {
 
@@ -344,7 +299,7 @@ function submitJobseeker() {
 
         phone = document.getElementById("e-phone").value.trim();
 
-        uan = document.getElementById("e-uan").value.trim();
+        uan = document.getElementById("e-uan")?.value.trim() || '';
     }
 
     const salary =
@@ -367,11 +322,30 @@ function submitJobseeker() {
         showToast("Invalid phone", "error");
         return;
     }
+    if (isFresher) {
 
-    if (!validateUAN(uan)) {
-        showToast("Invalid UAN", "error");
-        return;
+        if (!dob) {
+
+            showToast("Select DOB", "error");
+
+            return;
+        }
+
+        if (!validatePAN(pan)) {
+
+            showToast("Invalid PAN Number", "error");
+
+            return;
+        }
+
+        if (!validateAadhaar(aadhaar)) {
+
+            showToast("Invalid Aadhaar Number", "error");
+
+            return;
+        }
     }
+   
 
     const newCandidate = {
 
@@ -380,8 +354,13 @@ function submitJobseeker() {
         email: email,
 
         phone: phone,
+        dob: isFresher ? dob : null,
 
-        uan: uan,
+        panNumber: isFresher ? pan : null,
+
+        aadhaarNumber: isFresher ? aadhaar : null,
+
+        uan: isFresher ? null : uan,
 
         experience: 0,
 
@@ -393,14 +372,13 @@ function submitJobseeker() {
 
         candidateType: isFresher ? "fresher" : "experienced",
     };
-    const token = localStorage.getItem("token");
+    const toke = localStorage.getItem("token");
     fetch(`${API_BASE_URL}/Candidates`, {
 
 method: 'POST',
 
     headers: {
-        'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`
+    'Content-Type': 'application/json'
 },
 
 body: JSON.stringify(newCandidate)
@@ -611,10 +589,10 @@ async function handleLogin() {
 
         try {
             data = await response.json();
-        } catch {
+        }
+        catch {
             data = {};
         }
-
         // Store JWT Token
         localStorage.setItem(
             "token",
@@ -1375,22 +1353,22 @@ async function applyJob(jobId, jobTitle) {
     JSON.stringify(application)
 });
 
-        if (!response.ok) {
-            const message = await response.text();
-            throw new Error(message);
-        }
+if (!response.ok) {
 
-        showToast('Applied successfully', 'success');
+    const message = await response.text(); throw new Error(message);
+}
+
+        showToast(error.message, "error");
 
     } catch (error) {
 
-        console.error(error);
+    console.error(error);
 
-        showToast(
-            error.message || 'Failed to apply',
-            'error'
-        );
-    }
+    showToast(
+        "Failed to apply",
+        "error"
+    );
+}
 }
 
 /* INIT */

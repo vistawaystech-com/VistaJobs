@@ -6,7 +6,8 @@ using Jobsy.API.Models;
 
 namespace Jobsy.API.Controllers
 {
-    [Authorize(Roles = "jobseeker,employer")]
+    [AllowAnonymous]
+    //[Authorize(Roles = "jobseeker,employer")]
     [ApiController]
     [Route("api/[controller]")]
     public class CandidatesController : ControllerBase

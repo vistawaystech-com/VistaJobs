@@ -10,7 +10,11 @@
 
         public string Phone { get; set; } = string.Empty;
 
-        public string UAN { get; set; } = string.Empty;
+        public DateTime? Dob { get; set; }
+
+        public string? PanNumber { get; set; }
+
+        public string? AadhaarNumber { get; set; }
 
         public int Experience { get; set; }
 
