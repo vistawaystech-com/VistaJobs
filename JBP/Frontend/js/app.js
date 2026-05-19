@@ -20,7 +20,6 @@ function showPage(pageId) {
     if (target) {
         target.classList.add('active');
     }
-
     document.querySelectorAll('.nav-link[data-page]').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.page === pageId);
     });
@@ -33,6 +32,62 @@ function showPage(pageId) {
     });
 }
 
+/* REGISTER */
+async function handleRegister() {
+    try {
+        const name = document.getElementById('register-name')?.value.trim();
+        const email = document.getElementById('register-email')?.value.trim();
+        const password = document.getElementById('register-pass')?.value.trim();
+        const role = document.getElementById('register-role')?.value;
+
+        if (!name || !email || !password || !role) {
+            showToast('Please fill all fields', 'error');
+            return;
+        }
+
+        if (!validateEmail(email)) {
+            showToast('Invalid email', 'error');
+            return;
+        }
+
+        const payload = {
+            FullName: name,
+            Email: email,
+            Password: password,
+            Role: role
+        };
+
+        const resp = await fetch(`${API_BASE_URL}/Auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!resp.ok) {
+            const t = await resp.text();
+            showToast(t || 'Registration failed', 'error');
+            return;
+        }
+
+        // Clear register form inputs so values are not retained
+        const rn = document.getElementById('register-name'); if (rn) rn.value = '';
+        const re = document.getElementById('register-email'); if (re) re.value = '';
+        const rp = document.getElementById('register-pass'); if (rp) rp.value = '';
+        const rr = document.getElementById('register-role'); if (rr) rr.value = '';
+
+        showToast('Account created successfully', 'success');
+
+        // Navigate to appropriate page without persisting entered credentials
+        if (role === 'jobseeker') showPage('jobseeker');
+        else if (role === 'employer') showPage('employer');
+        else showPage('login');
+
+    } catch (error) {
+        console.error(error);
+        showToast('Registration failed', 'error');
+    }
+}
+
 /* TOAST */
 let toastTimer;
 
@@ -42,7 +97,7 @@ function showToast(message, type = 'info') {
 
     if (!toast) return;
 
-    toast.className = `toast ${ type } `;
+    toast.className = `toast ${type} `;
 
     toast.innerHTML = message;
 
@@ -76,6 +131,12 @@ function closeModal() {
 function toggleMobileNav() {
 
     document.getElementById('navMobile')?.classList.toggle('open');
+}
+
+function togglePassword(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.type === 'password') el.type = 'text'; else el.type = 'password';
 }
 
 /* SKILLS */
@@ -112,7 +173,7 @@ function renderChip(val, type, inputEl) {
     chip.className = 'skill-chip';
 
     chip.innerHTML = `
-        ${ val }
+        ${val}
 <button type="button"
     onclick="removeSkill(this,'${val}','${type}')">
     ×
@@ -172,7 +233,7 @@ function handleSearch() {
     renderJobs(filtered);
 
     showToast(
-        `${ filtered.length } jobs found`,
+        `${filtered.length} jobs found`,
         "success"
     );
 }
@@ -240,15 +301,11 @@ function validatePhone(phone) {
 
     return /^[6-9]\d{9}$/.test(phone);
 }
-function validatePAN(pan) {
-    return /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(pan);
+
+function validateUAN(uan) {
+
+    return /^\d{12}$/.test(uan);
 }
-
-function validateAadhaar(aadhaar) {
-    return /^\d{12}$/.test(aadhaar);
-}
-
-
 
 /* SUBMIT JOBSEEKER */
 function submitJobseeker() {
@@ -270,11 +327,7 @@ function submitJobseeker() {
 
     let email = "";
     let phone = "";
-    let dob = "";
-    let pan = "";
-    let aadhaar = "";
     let uan = "";
-    
 
     if (isFresher) {
 
@@ -282,16 +335,7 @@ function submitJobseeker() {
 
         phone = document.getElementById("f-phone").value.trim();
 
-        dob = document.getElementById("f-dob").value;
-
-        pan = document.getElementById("f-pan")
-            .value.trim()
-            .toUpperCase();
-
-        aadhaar = document.getElementById("f-aadhaar")
-            .value.trim();
-
-        
+        uan = document.getElementById("f-uan").value.trim();
 
     } else {
 
@@ -299,7 +343,7 @@ function submitJobseeker() {
 
         phone = document.getElementById("e-phone").value.trim();
 
-        uan = document.getElementById("e-uan")?.value.trim() || '';
+        uan = document.getElementById("e-uan").value.trim();
     }
 
     const salary =
@@ -322,30 +366,11 @@ function submitJobseeker() {
         showToast("Invalid phone", "error");
         return;
     }
-    if (isFresher) {
 
-        if (!dob) {
-
-            showToast("Select DOB", "error");
-
-            return;
-        }
-
-        if (!validatePAN(pan)) {
-
-            showToast("Invalid PAN Number", "error");
-
-            return;
-        }
-
-        if (!validateAadhaar(aadhaar)) {
-
-            showToast("Invalid Aadhaar Number", "error");
-
-            return;
-        }
+    if (!validateUAN(uan)) {
+        showToast("Invalid UAN", "error");
+        return;
     }
-   
 
     const newCandidate = {
 
@@ -354,13 +379,8 @@ function submitJobseeker() {
         email: email,
 
         phone: phone,
-        dob: isFresher ? dob : null,
 
-        panNumber: isFresher ? pan : null,
-
-        aadhaarNumber: isFresher ? aadhaar : null,
-
-        uan: isFresher ? null : uan,
+        uan: uan,
 
         experience: 0,
 
@@ -372,7 +392,7 @@ function submitJobseeker() {
 
         candidateType: isFresher ? "fresher" : "experienced",
     };
-    const toke = localStorage.getItem("token");
+
     fetch(`${API_BASE_URL}/Candidates`, {
 
 method: 'POST',
@@ -466,7 +486,7 @@ async function findCandidates() {
         };
 
         // Save Job to Database
-        await fetch(`${ API_BASE_URL }/Jobs`, {
+        await fetch(`${API_BASE_URL}/Jobs`, {
 
 method: "POST",
 
@@ -585,14 +605,8 @@ async function handleLogin() {
             throw new Error("Invalid login");
         }
 
-        let data = {};
+        const data = await response.json();
 
-        try {
-            data = await response.json();
-        }
-        catch {
-            data = {};
-        }
         // Store JWT Token
         localStorage.setItem(
             "token",
@@ -614,6 +628,10 @@ async function handleLogin() {
             "success"
         );
         updateNavbar();
+
+        // Clear login inputs so credentials are not left in the form
+        const le = document.getElementById('login-email'); if (le) le.value = '';
+        const lp = document.getElementById('login-pass'); if (lp) lp.value = '';
 
         // Redirect based on role
         if (data.role === "admin") {
@@ -656,6 +674,14 @@ function logout() {
 
     localStorage.removeItem("name");
 
+    // Also clear any lingering form values
+    const rn = document.getElementById('register-name'); if (rn) rn.value = '';
+    const re = document.getElementById('register-email'); if (re) re.value = '';
+    const rp = document.getElementById('register-pass'); if (rp) rp.value = '';
+    const rr = document.getElementById('register-role'); if (rr) rr.value = '';
+    const le = document.getElementById('login-email'); if (le) le.value = '';
+    const lp = document.getElementById('login-pass'); if (lp) lp.value = '';
+
     updateNavbar();
 
     showToast(
@@ -690,7 +716,7 @@ function updateNavbar() {
         userArea.style.display = "flex";
 
         welcomeUser.innerText =
-            `${ name } (${ role })`;
+            `${name} (${role})`;
 
     } else {
 
@@ -711,7 +737,7 @@ async function loadCandidateProfile() {
 
         const response =
             await fetch(
-                `${ API_BASE_URL }/Candidates`,
+                `${API_BASE_URL}/Candidates`,
 {
     headers: {
         Authorization:
@@ -773,7 +799,7 @@ async function loadAppliedJobs() {
 
         const response =
             await fetch(
-                `${ API_BASE_URL }/Applications`,
+                `${API_BASE_URL}/Applications`,
 {
     headers: {
         Authorization:
@@ -852,7 +878,7 @@ async function uploadResume() {
 
         const response =
             await fetch(
-                `${ API_BASE_URL }/Candidates`,
+                `${API_BASE_URL}/Candidates`,
 {
     headers: {
         Authorization:
@@ -1234,7 +1260,6 @@ function renderJobs(jobs) {
         document.getElementById(
             "jobsGrid"
         );
-    if (!container) return;
 
     if (!jobs.length) {
 
@@ -1353,22 +1378,22 @@ async function applyJob(jobId, jobTitle) {
     JSON.stringify(application)
 });
 
-if (!response.ok) {
+        if (!response.ok) {
+            const message = await response.text();
+            throw new Error(message);
+        }
 
-    const message = await response.text(); throw new Error(message);
-}
-
-        showToast(error.message, "error");
+        showToast('Applied successfully', 'success');
 
     } catch (error) {
 
-    console.error(error);
+        console.error(error);
 
-    showToast(
-        "Failed to apply",
-        "error"
-    );
-}
+        showToast(
+            error.message || 'Failed to apply',
+            'error'
+        );
+    }
 }
 
 /* INIT */
@@ -1385,7 +1410,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (token && role) {
 
         showToast(
-            `Welcome back ${ localStorage.getItem("name") } `,
+            `Welcome back ${localStorage.getItem("name")} `,
             "success"
         );
 

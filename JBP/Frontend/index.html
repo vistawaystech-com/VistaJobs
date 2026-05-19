@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta name="description" content="Jobsy – Elevate Your Career Path. Find jobs or hire talent."/>
-  <title>Jobsy – Elevate Your Career Path</title>
+  <meta name="description" content="VistaJobs– Elevate Your Career Path. Find jobs or hire talent."/>
+  <title>VistaJobs – Elevate Your Career Path</title>
   <link rel="stylesheet" href="css/style.css"/>
   <link rel="stylesheet" href="css/forms.css"/>
 </head>
@@ -15,7 +15,7 @@
     ════════════════════════════════════════ -->
     <nav class="navbar">
         <div class="container">
-            <div class="logo">Job<span>sy</span></div>
+            <div class="logo">Vista<span>Jobs</span></div>
 
             <!-- Desktop nav -->
             <div class="nav-links">
@@ -437,7 +437,7 @@
 
             <!-- Left: Post Requirements -->
             <div class="employer-post-card">
-                <h2>📋 Post Job Requirements</h2>
+                <h2>📋  Job Requirements</h2>
 
                 <div class="form-group">
                     <label for="emp-company">Company Name <span class="req">*</span></label>
@@ -644,20 +644,20 @@
     <div id="page-register" class="page">
         <div class="login-page">
             <div class="login-card">
-                <div class="login-logo">Job<span>sy</span></div>
+                <div class="login-logo">Vista<span>Jobs</span></div>
                 <h1>Create An Account</h1>
                 <div class="form-group">
                     <label for="register-name">Full Name <span class="req">*</span></label>
-                    <input type="text" id="register-name" placeholder="e.g. Priya Nair" autocomplete="name" />
+                    <input type="text" id="register-name" placeholder="e.g. Priya Nair" autocomplete="name" value="" />
                 </div>
                 <div class="form-group">
                     <label for="register-email">Email Address <span class="req">*</span></label>
-                    <input type="email" id="register-email" placeholder="you@example.com" autocomplete="email" />
+                    <input type="email" id="register-email" placeholder="you@example.com" autocomplete="email" value="" />
                 </div>
                 <div class="form-group">
                     <label for="register-pass">Password <span class="req">*</span></label>
                     <div class="input-group">
-                        <input type="password" id="register-pass" placeholder="Enter password" autocomplete="current-password" />
+                        <input type="password" id="register-pass" placeholder="Enter password" autocomplete="current-password" value="" />
                         <button class="toggle-pass" type="button" onclick="togglePassword('register-pass')" title="Toggle password">👁</button>
                     </div>
                 </div>
@@ -674,6 +674,10 @@
                     Already have an account?
                     <a onclick="showPage('login')" style="font-weight:600;">Sign in</a>
                 </div>
+                 <!--after register it should automatically clear the form-->
+                <!--<div class="form-page">
+
+                </div>-->
             </div>
         </div>
     </div>
@@ -683,7 +687,7 @@
     <div id="page-login" class="page">
         <div class="login-page">
             <div class="login-card">
-                <div class="login-logo">Job<span>sy</span></div>
+                <div class="login-logo">Vista<span>Jobs</span></div>
                 <h2>Welcome Back 👋</h2>
                 <p class="sub">Sign in to access your dashboard</p>
 
@@ -695,12 +699,12 @@
 
                 <div class="form-group">
                     <label for="login-email">Email Address <span class="req">*</span></label>
-                    <input type="email" id="login-email" placeholder="you@example.com" autocomplete="email" />
+                    <input type="email" id="login-email" placeholder="you@example.com" autocomplete="email" value="" />
                 </div>
                 <div class="form-group">
                     <label for="login-pass">Password <span class="req">*</span></label>
                     <div class="input-group">
-                        <input type="password" id="login-pass" placeholder="Enter password" autocomplete="current-password" />
+                        <input type="password" id="login-pass" placeholder="Enter password" autocomplete="current-password" value="" />
                         <button class="toggle-pass" type="button" onclick="togglePassword('login-pass')" title="Toggle password">👁</button>
                     </div>
                 </div>
@@ -712,9 +716,9 @@
 
                 <div class="login-footer">
                     Don't have an account?
-                    <a onclick="showPage('jobseeker')">Register </a>
-                    &nbsp;|&nbsp;
-                    <a onclick="showPage('employer')">Register </a>
+                    <a onclick="showPage('register')">Register </a>
+                    <!--&nbsp;|&nbsp;
+                    <a onclick="showPage('employer')">Register </a>-->
                 </div>
 
                 <!-- Demo hint -->
