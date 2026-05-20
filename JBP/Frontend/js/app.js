@@ -346,7 +346,7 @@ function submitJobseeker() {
     }
 
     const salary =
-        document.getElementById(`${f}-salary`)?.value;
+        document.getElementById(`${p}-salary`)?.value;
 
     const skills =
         Skills[isFresher ? 'fresher' : 'experienced'];
