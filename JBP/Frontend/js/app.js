@@ -76,11 +76,14 @@ async function handleRegister() {
         const rr = document.getElementById('register-role'); if (rr) rr.value = '';
 
         showToast('Account created successfully', 'success');
+        //navigate to login page after registration instead of auto-login, to avoid confusion and also because user may want to login later. This also prevents the need to persist entered credentials in the form which can be a security risk.
+        if (role === 'jobseeker') showPage('login');
+        else if (role === 'employer') showPage('login');
 
         // Navigate to appropriate page without persisting entered credentials
-        if (role === 'jobseeker') showPage('jobseeker');
-        else if (role === 'employer') showPage('employer');
-        else showPage('login');
+        // if (role === 'jobseeker') showPage('jobseeker');
+        // else if (role === 'employer') showPage('employer');
+        // else showPage('login');
 
     } catch (error) {
         console.error(error);
