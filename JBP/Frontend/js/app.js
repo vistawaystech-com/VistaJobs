@@ -678,7 +678,7 @@ async function handleLogin() {
 
     loadCandidateProfile();
 
-    loadAppliedJobs();
+    // loadAppliedJobs();
 }
 
     } catch (error) {
@@ -811,72 +811,72 @@ document.getElementById(
     console.error(error);
 }
 }
-async function loadAppliedJobs() {
+// async function loadAppliedJobs() {
 
-    try {
+//     try {
 
-        const token =
-            localStorage.getItem("token");
+//         const token =
+//             localStorage.getItem("token");
 
-        const email =
-            JSON.parse(
-                atob(token.split('.')[1])
-            ).email;
+//         const email =
+//             JSON.parse(
+//                 atob(token.split('.')[1])
+//             ).email;
 
-        const response =
-            await fetch(
-                `${API_BASE_URL}/Applications`,
-{
-    headers: {
-        Authorization:
-        `Bearer ${token}`
-    }
-});
+//         const response =
+//             await fetch(
+//                 `${API_BASE_URL}/Applications`,
+// {
+//     headers: {
+//         Authorization:
+//         `Bearer ${token}`
+//     }
+// });
 
-const applications =
-    await response.json();
+// const applications =
+//     await response.json();
 
-const mine =
-    applications.filter(
-        a =>
-            a.candidateEmail === email
-    );
+// const mine =
+//     applications.filter(
+//         a =>
+//             a.candidateEmail === email
+//     );
 
-if (!mine.length) {
+// if (!mine.length) {
 
-    document.getElementById(
-        "applied-jobs"
-    ).innerHTML =
-        "No applications yet";
+//     document.getElementById(
+//         "applied-jobs"
+//     ).innerHTML =
+//         "No applications yet";
 
-    return;
-}
+//     return;
+// }
 
-document.getElementById(
-    "applied-jobs"
-).innerHTML = mine.map(a => `
+// document.getElementById(
+//     "applied-jobs"
+// ).innerHTML = mine.map(a => `
 
-            <div class="candidate-card">
+//             <div class="candidate-card">
 
-                <strong>
-                    ${a.jobTitle}
-                </strong>
+//                 <strong>
+//                     ${a.jobTitle}
+//                 </strong>
 
-                <p>
-                    Applied:
-                    ${new Date(a.appliedAt)
-        .toLocaleDateString()}
-                </p>
+//                 <p>
+//                     Applied:
+//                     ${new Date(a.appliedAt)
+//         .toLocaleDateString()}
+//                 </p>
 
-            </div>
+//             </div>
 
-        `).join('');
+//         `).join('');
 
-    } catch (error) {
+//     } catch (error) {
 
-    console.error(error);
-}
-}
+//     console.error(error);
+// }
+// }
 async function uploadResume() {
 
     try {
@@ -1256,30 +1256,30 @@ async function loadAdminDashboard() {
         );
     }
 }
-async function loadHomepageJobs() {
+// async function loadHomepageJobs() {
 
-    try {
+//     try {
 
-        const response =
-            await fetch(
-                `${API_BASE_URL}/Jobs`
-            );
+//         const response =
+//             await fetch(
+//                 `${API_BASE_URL}/Jobs`
+//             );
 
-const jobs =
-    await response.json();
-allJobs = jobs;
-renderJobs(jobs);
+// const jobs =
+//     await response.json();
+// allJobs = jobs;
+// renderJobs(jobs);
 
-    } catch (error) {
+//     } catch (error) {
 
-    console.error(error);
+//     console.error(error);
 
-    showToast(
-        "Failed to load jobs",
-        "error"
-    );
-}
-}
+//     showToast(
+//         "Failed to load jobs",
+//         "error"
+//     );
+// }
+// }
 function renderJobs(jobs) {
 
     const container =
@@ -1427,7 +1427,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     updateNavbar();
-    loadHomepageJobs();
+    // loadHomepageJobs();
         
     const token = localStorage.getItem("token");
 
@@ -1460,7 +1460,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             loadCandidateProfile();
 
-            loadAppliedJobs();
+            // loadAppliedJobs();
         }
     }
 });
