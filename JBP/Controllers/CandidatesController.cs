@@ -19,7 +19,7 @@ namespace JBP.Controllers
         {
             _context = context;
         }
-
+        [AllowAnonymous]
         [HttpGet]
         public IActionResult GetCandidates()
         {
