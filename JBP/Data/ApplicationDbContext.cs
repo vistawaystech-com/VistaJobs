@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Jobsy.API.Models;
+using JBP.Models;
 
-namespace Jobsy.API.Data
+namespace JBP.Data
 {
     public class ApplicationDbContext : DbContext
     {

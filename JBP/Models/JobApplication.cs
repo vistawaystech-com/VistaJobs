@@ -1,4 +1,4 @@
-﻿namespace Jobsy.API.Models
+﻿namespace JBP.Models
 {
     public class JobApplication
     {

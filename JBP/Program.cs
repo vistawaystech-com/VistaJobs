@@ -1,6 +1,5 @@
-
-using Jobsy.API.Data;
-using Jobsy.API.Services;
+using JBP.Data;
+using JBP.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -113,5 +112,13 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// expose simple endpoint to inspect migrations (only for local debugging)
+app.MapGet("/__migrations", async (ApplicationDbContext db) =>
+{
+    var applied = await Task.Run(() => db.Database.GetAppliedMigrations());
+    var pending = await Task.Run(() => db.Database.GetPendingMigrations());
+    return Results.Ok(new { applied = applied.ToList(), pending = pending.ToList() });
+});
 
 app.Run();

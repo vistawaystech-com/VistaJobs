@@ -633,6 +633,13 @@ async function handleLogin() {
         const le = document.getElementById('login-email'); if (le) le.value = '';
         const lp = document.getElementById('login-pass'); if (lp) lp.value = '';
 
+        //Hide login/register pages and show dashboard based on role
+        document.getElementById("loginBtn").style.display = "none";
+        document.getElementById("registerBtn").style.display = "none";
+
+        //show Logout Area
+        document.getElementById("user-area").style.display = "flex";
+
         // Redirect based on role
         if (data.role === "admin") {
 
@@ -666,7 +673,7 @@ async function handleLogin() {
     }
 }
 /* LOGOUT */
-function logout() {
+document.getElementById("logout-btn").addEventListener("click",function logout() {
 
     localStorage.removeItem("token");
 
@@ -675,12 +682,19 @@ function logout() {
     localStorage.removeItem("name");
 
     // Also clear any lingering form values
-    const rn = document.getElementById('register-name'); if (rn) rn.value = '';
-    const re = document.getElementById('register-email'); if (re) re.value = '';
-    const rp = document.getElementById('register-pass'); if (rp) rp.value = '';
-    const rr = document.getElementById('register-role'); if (rr) rr.value = '';
-    const le = document.getElementById('login-email'); if (le) le.value = '';
-    const lp = document.getElementById('login-pass'); if (lp) lp.value = '';
+    // const rn = document.getElementById('register-name'); if (rn) rn.value = '';
+    // const re = document.getElementById('register-email'); if (re) re.value = '';
+    // const rp = document.getElementById('register-pass'); if (rp) rp.value = '';
+    // const rr = document.getElementById('register-role'); if (rr) rr.value = '';
+    // const le = document.getElementById('login-email'); if (le) le.value = '';
+    // const lp = document.getElementById('login-pass'); if (lp) lp.value = '';
+    //show Lohin/Register again
+    document.getElementById("loginBtn").style.display = "inline-block";
+    document.getElementById("registerBtn").style.display = "inline-block";
+
+    //hide logout area
+    document.getElementById("user-area").style.display = "none";
+
 
     updateNavbar();
 
@@ -690,7 +704,7 @@ function logout() {
     );
 
     showPage("home");
-}
+});
 function updateNavbar() {
 
     const token =
@@ -1395,7 +1409,42 @@ async function applyJob(jobId, jobTitle) {
         );
     }
 }
+async function submitProfile(event) {
+    event.preventDefault();
 
+    const data = {
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        phone: document.getElementById('phone').value,
+        AadhaarNumber: document.getElementById('aadhaar').value,
+        Dob: document.getElementById('dob').value,
+        PanNumber: document.getElementById('pan').value
+    };
+
+    const res = await fetch('/api/candidates/submit-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+
+    let json = null;
+    try {
+        json = await res.json();
+    } catch (e) {
+        // not JSON or empty
+    }
+
+    if (res.ok) {
+        alert('Profile submitted');
+    } else {
+        const message = (json && (json.detail || json.message || json.error)) || res.statusText || 'Unknown error';
+        alert('Submit failed: ' + message);
+    }
+}
+
+// wire up form
+const form = document.getElementById('profileForm');
+if (form) form.addEventListener('submit', submitProfile);
 /* INIT */
 document.addEventListener('DOMContentLoaded', () => {
 

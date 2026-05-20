@@ -1,10 +1,10 @@
-﻿using Jobsy.API.Data;
-using Jobsy.API.Models;
-using Jobsy.API.Services;
+﻿using JBP.Data;
+using JBP.Models;
+using JBP.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jobsy.API.Controllers
+namespace JBP.API.Controllers
 {
     [Authorize]
 

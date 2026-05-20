@@ -1,6 +1,6 @@
-﻿using Jobsy.API.Data;
-using Jobsy.API.DTOs;
-using Jobsy.API.Models;
+﻿using JBP.Data;
+using JBP.DTOs;
+using JBP.Models;
 
 using Microsoft.AspNetCore.Mvc;
 

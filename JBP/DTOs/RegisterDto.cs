@@ -1,4 +1,4 @@
-﻿namespace Jobsy.API.DTOs
+﻿namespace JBP.DTOs
 {
     public class RegisterDto
     {

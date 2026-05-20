@@ -1,10 +1,11 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore.SqlServer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Jobsy.API.Data;
-using Jobsy.API.Models;
+using JBP.Data;
+using JBP.Models;
 
-namespace Jobsy.API.Controllers
+namespace JBP.Controllers
 {
     [AllowAnonymous]
     //[Authorize(Roles = "jobseeker,employer")]

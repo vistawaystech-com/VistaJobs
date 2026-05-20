@@ -1,8 +1,8 @@
-﻿using Jobsy.API.Data;
+﻿using JBP.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jobsy.API.Controllers
+namespace JBP.Controllers
 {
     [Authorize(Roles = "admin")]
 

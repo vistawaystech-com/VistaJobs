@@ -22,6 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="SqlScripts\" />
     <Folder Include="Uploads\" />
     <Folder Include="Repositories\" />
   </ItemGroup>
