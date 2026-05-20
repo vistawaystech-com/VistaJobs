@@ -318,11 +318,11 @@ function submitJobseeker() {
 
     if (isFresher) {
 
-        name = document.getElementById("f-name").value.trim();
+        name = document.getElementById("f-name")?.value.trim() || "";
 
     } else {
 
-        name = document.getElementById("e-name").value.trim();
+        name = name = document.getElementById("e-name")?.value.trim() || "";
     }
 
     let email = "";
@@ -331,19 +331,18 @@ function submitJobseeker() {
 
     if (isFresher) {
 
-        email = document.getElementById("f-email").value.trim();
+        email = email = document.getElementById("f-email")?.value.trim() || "";
 
-        phone = document.getElementById("f-phone").value.trim();
+        phone = phone = document.getElementById("f-phone")?.value.trim() || "";
 
-        uan = document.getElementById("f-uan").value.trim();
 
     } else {
 
-        email = document.getElementById("e-email").value.trim();
+        email = document.getElementById("e-email")?.value.trim() || ""
 
-        phone = document.getElementById("e-phone").value.trim();
+        phone = document.getElementById("e-phone")?.value.trim() || ""
 
-        uan = document.getElementById("e-uan").value.trim();
+        uan = document.getElementById("e-uan")?.value.trim() || ""
     }
 
     const salary =
@@ -367,11 +366,21 @@ function submitJobseeker() {
         return;
     }
 
-    if (!validateUAN(uan)) {
+    if (!isFresher && !validateUAN(uan)) {
+
         showToast("Invalid UAN", "error");
+
         return;
     }
 
+    const dob =
+        document.getElementById(`${p}-dob`)?.value || "";
+
+    const aadhaarNumber =
+        document.getElementById(`${p}-aadhaar`)?.value || "";
+
+    const panNumber =
+        document.getElementById(`${p}-pan`)?.value || "";   
     const newCandidate = {
 
         fullName: name,
@@ -380,7 +389,13 @@ function submitJobseeker() {
 
         phone: phone,
 
-        uan: uan,
+        uan: isFresher ? null : uan,
+
+        dob: dob,
+
+        aadhaarNumber: aadhaarNumber,
+
+        panNumber: panNumber,
 
         experience: 0,
 
@@ -397,14 +412,25 @@ function submitJobseeker() {
 
 method: 'POST',
 
-    headers: {
-    'Content-Type': 'application/json'
-},
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + localStorage.getItem("token")
+        },
 
 body: JSON.stringify(newCandidate)
 
     })
-    .then(response => response.json())
+        .then(async response => {
+
+            if (!response.ok) {
+
+                const text = await response.text();
+
+                throw new Error(text || "API Failed");
+            }
+
+            return response.json();
+        })
 
     .then(data => {
 
