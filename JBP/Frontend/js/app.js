@@ -465,8 +465,7 @@ async function findCandidates() {
         const title =
             document.getElementById('emp-jobtitle')?.value.trim();
 
-        const location =
-            document.getElementById('emp-location')?.value.trim();
+        
 
         const salary =
             document.getElementById('emp-salary')?.value;
@@ -547,9 +546,10 @@ const filtered = candidates.filter(c => {
 renderCandidates(filtered);
 
 showToast(
-    "Job posted successfully",
+    `${filtered.length} candidates matched`,
     "success"
 );
+
 
     } catch (error) {
 
@@ -569,6 +569,15 @@ function renderCandidates(list) {
 
     if (!container) return;
 
+    if (!list.length) {
+
+        container.innerHTML = `
+            <p>No matching candidates found</p>
+        `;
+
+        return;
+    }
+
     container.innerHTML = list.map(c => `
 
         <div class="candidate-card">
@@ -585,10 +594,78 @@ function renderCandidates(list) {
                 ${c.email}
             </div>
 
+            <button class="btn-primary"
+                onclick='viewCandidateProfile(${JSON.stringify(JSON.stringify(c))})'>
+
+                View Profile
+
+            </button>
+
         </div>
 
     `).join('');
 }
+function viewCandidateProfile(candidateData) {
+
+    const c = JSON.parse(candidateData);
+
+    document.getElementById(
+        "candidateProfileModal"
+    ).style.display = "flex";
+
+    document.getElementById(
+        "candidateProfileContent"
+    ).innerHTML = `
+
+        <div class="profile-info">
+            <strong>Name:</strong>
+            ${c.fullName}
+        </div>
+
+        <div class="profile-info">
+            <strong>Email:</strong>
+            ${c.email}
+        </div>
+
+        <div class="profile-info">
+            <strong>Phone:</strong>
+            ${c.phone}
+        </div>
+
+        <div class="profile-info">
+            <strong>Skills:</strong>
+            ${c.skills}
+        </div>
+
+        <div class="profile-info">
+            <strong>Experience:</strong>
+            ${c.experience} years
+        </div>
+
+        <div class="profile-info">
+            <strong>Location:</strong>
+            ${c.location}
+        </div>
+
+        <div class="profile-info">
+            <strong>Salary:</strong>
+            ${c.salary}
+        </div>
+
+        <div class="profile-info">
+            <strong>Type:</strong>
+            ${c.candidateType}
+        </div>
+    `;
+}
+
+function closeCandidateProfile() {
+
+    document.getElementById(
+        "candidateProfileModal"
+    ).style.display = "none";
+}
+
 
 /* LOGIN */
 async function handleLogin() {

@@ -22,7 +22,7 @@
                 <button class="nav-link active" data-page="home" onclick="showPage('home')">Home</button>
                 <!--<button class="nav-link" data-page="jobseeker" onclick="showPage('jobseeker')">Jobseeker</button>
                 <button class="nav-link" data-page="employer" onclick="showPage('employer')">Employer</button>-->
-                <button  id="registerBtn" class="nav-link btn-Register" data-page="register" onclick="showPage('register')">Register</button>
+                <button id="registerBtn" class="nav-link btn-Register" data-page="register" onclick="showPage('register')">Register</button>
                 <button id="loginBtn" class="nav-link btn-login" data-page="login" onclick="showPage('login')">Login</button>
                 <div id="user-area" class="user-area" style="display:none;"> <span id="welcome-user"></span> <button id="logout-btn" class="btn-secondary" onclick="logout()"> Logout </button> </div>
             </div>
@@ -257,7 +257,7 @@
                     <div class=" form-row">
                         <div class="form-group full-width">
                             <label for="f-resume"> Upload Resume</label>
-                            <input type="file" id="f-resume" accept=".pdf,.doc,.docx"/>
+                            <input type="file" id="f-resume" accept=".pdf,.doc,.docx" />
                         </div>
                     </div>
                 </div><!-- /fresher -->
@@ -405,40 +405,37 @@
             <!--<div class="dashboard-section">
 
                 <h2>Candidate Dashboard</h2>-->
+            <!-- PROFILE -->
+            <!--<div class="dashboard-card">
 
-                <!-- PROFILE -->
-                <!--<div class="dashboard-card">
+                <h3>Profile</h3>
 
-                    <h3>Profile</h3>
+                <div id="candidate-profile">
 
-                    <div id="candidate-profile">
+                    Loading profile...
 
-                        Loading profile...
+                </div>
+            </div>-->
+            <!-- RESUME -->
+            <!--<div class="dashboard-card">
 
-                    </div>
-                </div>-->
+                <h3>Upload Resume</h3>
 
-                <!-- RESUME -->
-                <!--<div class="dashboard-card">
+                <input type="file"
+                       id="resume-file"
+                       accept=".pdf">
 
-                    <h3>Upload Resume</h3>
+                <button class="btn-primary"
+                        onclick="uploadResume()">
 
-                    <input type="file"
-                           id="resume-file"
-                           accept=".pdf">
+                    Upload Resume
 
-                    <button class="btn-primary"
-                            onclick="uploadResume()">
+                </button>
 
-                        Upload Resume
-
-                    </button>
-
-                    <div id="resume-status"></div>
-                </div>-->
-
-                <!-- APPLICATIONS -->
-                <!--<div class="dashboard-card">
+                <div id="resume-status"></div>
+            </div>-->
+            <!-- APPLICATIONS -->
+            <!--<div class="dashboard-card">
 
                     <h3>Applied Jobs</h3>
 
@@ -498,7 +495,7 @@
                     </div>
                     <div class="form-group">
                         <label for="emp-location">Job Location</label>
-                        <input type="text" id="emp-location" placeholder="e.g. Chennai, Remote" />
+                        <input type="text" id="emp-location" placeholder="enter the job location, Remote" />
                     </div>
                 </div>
                 <div class="form-group">
@@ -528,7 +525,7 @@
                     <h2>Matching Candidates</h2>
                 </div>
                 <div id="candidatesList">
-                    <div class="empty-state">
+                    <div class="candidates-grid">
                         <div class="empty-icon">🎯</div>
                         <p>Fill in your requirements on the left and click <strong>"Find Matching Candidates"</strong> to see the best talent.</p>
                     </div>
@@ -536,34 +533,7 @@
             </div>
 
         </div>
-        <div class="dashboard-section">
-
-            <h2>Employer Dashboard</h2>
-
-            <!-- JOBS -->
-            <div class="dashboard-card">
-
-                <h3>Posted Jobs</h3>
-
-                <div id="employer-jobs">
-
-                    No jobs posted yet
-
-                </div>
-            </div>
-
-            <!-- APPLICANTS -->
-            <div class="dashboard-card">
-
-                <h3>Applicants</h3>
-
-                <div id="employer-applicants">
-
-                    No applicants yet
-
-                </div>
-            </div>
-        </div>
+        
     </div><!-- /page-employer -->
     <!-- ═══════════════════════════════════════
          PAGE: ADMIN
@@ -696,7 +666,7 @@
                     Already have an account?
                     <a onclick="showPage('login')" style="font-weight:600;">Sign in</a>
                 </div>
-                 <!--after register it should automatically clear the form-->
+                <!--after register it should automatically clear the form-->
                 <!--<div class="form-page">
 
                 </div>-->
@@ -779,5 +749,56 @@
     </div>
 
     <script src="js/app.js"></script>
+    <div id="modal" class="modern-modal">
+
+        <div class="modern-modal-content">
+
+            <button class="close-btn"
+                    onclick="closeModal()">
+
+                ×
+
+            </button>
+
+            <h2 id="modalTitle"></h2>
+
+            <div id="modalMsg"></div>
+
+        </div>
+
+    </div>
+    <!-- Candidate Profile Modal -->
+
+    <div id="candidateProfileModal"
+         class="profile-modal"
+         style="display:none;">
+
+        <div class="profile-card">
+
+            <div class="profile-header">
+
+                <div class="profile-title">
+                    Candidate Profile
+                </div>
+
+                <button class="close-btn"
+                        onclick="closeCandidateProfile()">
+                    X
+                </button>
+
+            </div>
+
+            <div id="candidateProfileContent"></div>
+
+            <button class="back-btn"
+                    onclick="closeCandidateProfile()">
+
+                ← Back
+
+            </button>
+
+        </div>
+
+    </div>
 </body>
 </html>

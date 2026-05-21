@@ -12,6 +12,6 @@
 
         public string CandidateName { get; set; } = string.Empty;
 
-        public DateTime AppliedAt { get; set; }
+        public DateTime AppliedAt { get; set; } = DateTime.Now;
     }
 }

@@ -22,7 +22,7 @@ namespace JBP.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Jobsy.API.Models.Candidate", b =>
+            modelBuilder.Entity("JBP.Models.Candidate", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -79,7 +79,7 @@ namespace JBP.Migrations
                     b.ToTable("Candidates");
                 });
 
-            modelBuilder.Entity("Jobsy.API.Models.Job", b =>
+            modelBuilder.Entity("JBP.Models.Job", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -123,7 +123,7 @@ namespace JBP.Migrations
                     b.ToTable("Jobs");
                 });
 
-            modelBuilder.Entity("Jobsy.API.Models.JobApplication", b =>
+            modelBuilder.Entity("JBP.Models.JobApplication", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -154,7 +154,7 @@ namespace JBP.Migrations
                     b.ToTable("JobApplications");
                 });
 
-            modelBuilder.Entity("Jobsy.API.Models.User", b =>
+            modelBuilder.Entity("JBP.Models.User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
