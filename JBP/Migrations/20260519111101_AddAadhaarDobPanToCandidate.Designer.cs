@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace JBP.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260521064310_intialdb")]
-    partial class Intialdb
+    [Migration("20260519111101_AddAadhaarDobPanToCandidate")]
+    partial class AddAadhaarDobPanToCandidate : Migration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

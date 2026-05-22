@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace JBP.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260521064310_intialdb")]
-    partial class Intialdb
+    [Migration("20260519060903_FresherFields")]
+    partial class FresherFields : Migration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,7 +25,7 @@ namespace JBP.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("JBP.Models.Candidate", b =>
+            modelBuilder.Entity("Jobsy.API.Models.Candidate", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -82,7 +82,7 @@ namespace JBP.Migrations
                     b.ToTable("Candidates");
                 });
 
-            modelBuilder.Entity("JBP.Models.Job", b =>
+            modelBuilder.Entity("Jobsy.API.Models.Job", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -126,7 +126,7 @@ namespace JBP.Migrations
                     b.ToTable("Jobs");
                 });
 
-            modelBuilder.Entity("JBP.Models.JobApplication", b =>
+            modelBuilder.Entity("Jobsy.API.Models.JobApplication", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -157,7 +157,7 @@ namespace JBP.Migrations
                     b.ToTable("JobApplications");
                 });
 
-            modelBuilder.Entity("JBP.Models.User", b =>
+            modelBuilder.Entity("Jobsy.API.Models.User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
