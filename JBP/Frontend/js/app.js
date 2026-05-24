@@ -594,12 +594,83 @@ function renderCandidates(list) {
                 ${c.email}
             </div>
 
+            <div class="verification-cards">
+
+    <span class="verification-pill">
+
+        ${c.aadhaarVerified
+            ? "✅ Aadhaar Verified"
+            : "❌ Aadhaar Pending"}
+
+    </span>
+
+    <span class="verification-pill">
+
+        ${c.panVerified
+            ? "✅ PAN Verified"
+            : "❌ PAN Pending"}
+
+    </span>
+
+    <span class="verification-pill">
+
+        ${c.uanVerified
+            ? "✅ UAN Verified"
+            : "❌ UAN Pending"}
+
+    </span>
+
+   <div class="resume-actions">
+
+    <span class="verification-pill">
+
+        ${c.resume
+            ? "📄 Resume Uploaded"
+            : "❌ No Resume"}
+
+    </span>
+
+    ${c.resume
+
+            ?
+
+            `
+        <button class="resume-btn"
+            onclick="viewResume('${c.resume}')">
+
+            View Resume
+
+        </button>
+
+        <button class="resume-btn"
+            onclick="downloadResume('${c.resume}')">
+
+            Download
+
+        </button>
+        `
+
+            :
+
+            ""
+    }
+
+</div>
+
+</div>
+
             <button class="btn-primary"
                 onclick='viewCandidateProfile(${JSON.stringify(JSON.stringify(c))})'>
 
                 View Profile
 
             </button>
+            <button class="btn-primary"
+    onclick="viewVerificationDetails(${c.id})">
+
+    View Details
+
+</button>
 
         </div>
 
@@ -1554,7 +1625,7 @@ if (form) form.addEventListener('submit', submitProfile);
 /* INIT */
 document.addEventListener('DOMContentLoaded', () => {
 
-
+    loadVerificationStatus();
     updateNavbar();
     // loadHomepageJobs();
         
@@ -1593,3 +1664,346 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+async function verifyAadhaar() {
+
+    const aadhaar =
+        document
+            .getElementById("aadhaar-number")
+            .value;
+
+    const response = await fetch(
+        `${API_BASE_URL}/Verification/verify-aadhaar`,
+        {
+            method: "POST",
+
+            headers: {
+
+                "Content-Type": "application/json",
+
+                "Authorization":
+                    "Bearer " +
+                    localStorage.getItem("token")
+            },
+
+            body: JSON.stringify({
+                aadhaarNumber: aadhaar
+            })
+        });
+
+    const data = await response.json();
+
+    if (data.success) {
+
+        document.getElementById(
+            "aadhaar-status"
+        ).innerHTML =
+            "✅ Verified";
+    }
+    const btn =
+        document.getElementById(
+            "aadhaar-btn"
+        );
+
+    btn.disabled = true;
+
+    btn.innerHTML =
+        "Verified";
+}
+async function verifyPan() {
+
+    const pan =
+        document
+            .getElementById("pan-number")
+            .value;
+
+    const response = await fetch(
+        `${API_BASE_URL}/Verification/verify-pan`,
+        {
+            method: "POST",
+
+            headers: {
+
+                "Content-Type": "application/json",
+
+                "Authorization":
+                    "Bearer " +
+                    localStorage.getItem("token")
+            },
+
+            body: JSON.stringify({
+                panNumber: pan
+            })
+        });
+
+    const data = await response.json();
+
+    if (data.success) {
+
+        document.getElementById(
+            "pan-status"
+        ).innerHTML =
+            "✅ Verified";
+    }
+    const btn =
+        document.getElementById(
+            "pan-btn"
+        );
+
+    btn.disabled = true;
+
+    btn.innerHTML =
+        "Verified";
+}
+async function verifyUan() {
+
+    const uan =
+        document
+            .getElementById("uan-number")
+            .value;
+
+    const response = await fetch(
+        `${API_BASE_URL}/Verification/verify-uan`,
+        {
+            method: "POST",
+
+            headers: {
+
+                "Content-Type": "application/json",
+
+                "Authorization":
+                    "Bearer " +
+                    localStorage.getItem("token")
+            },
+
+            body: JSON.stringify({
+                uanNumber: uan
+            })
+        });
+
+    const data = await response.json();
+
+    if (data.success) {
+
+        document.getElementById(
+            "uan-status"
+        ).innerHTML =
+            "✅ Verified";
+    }
+    const btn =
+        document.getElementById(
+            "uan-btn"
+        );
+
+    btn.disabled = true;
+
+    btn.innerHTML =
+        "Verified";
+}
+async function viewVerificationDetails(id) {
+
+    const response = await fetch(
+        `${API_BASE_URL}/Candidates/${id}`
+    );
+
+    const data = await response.json();
+
+    document.getElementById(
+        "verificationModal"
+    ).style.display = "flex";
+
+    document.getElementById(
+        "verificationContent"
+    ).innerHTML = `
+
+        <div class="profile-info">
+
+            <strong>Full Name:</strong>
+
+            ${data.fullName}
+
+        </div>
+
+        <div class="profile-info">
+
+            <strong>DOB:</strong>
+
+            ${data.dob || "N/A"}
+
+        </div>
+
+        <div class="profile-info">
+
+            <strong>PAN Number:</strong>
+
+            ${data.panNumber || "N/A"}
+
+        </div>
+
+        <div class="profile-info">
+
+            <strong>Aadhaar Number:</strong>
+
+            ${data.aadhaarNumber || "N/A"}
+
+        </div>
+
+        <div class="profile-info">
+
+            <strong>UAN Number:</strong>
+
+            ${data.uan || "N/A"}
+
+        </div>
+
+        <div class="profile-info">
+
+            <strong>Status:</strong>
+
+            <span class="verified-badge">
+
+    ✔ Verified
+
+</span>
+
+        </div>
+
+        <div class="profile-info">
+
+    <strong>Employment History:</strong>
+
+    <select class="employment-dropdown">
+
+        ${
+    data.employmentHistory
+
+        ?
+
+        data.employmentHistory
+            .split(',')
+
+            .map(company => `
+
+                    <option>
+                        ${company}
+                    </option>
+
+                `).join('')
+
+        :
+
+        `<option>
+                No Employment History
+            </option>`
+        }
+
+    </select>
+
+</div>
+    `;
+}
+function closeVerificationModal() {
+
+    document.getElementById(
+        "verificationModal"
+    ).style.display = "none";
+}
+function viewResume(path) {
+
+    window.open(path, "_blank");
+}
+
+function downloadResume(path) {
+
+    const link =
+        document.createElement("a");
+
+    link.href = path;
+
+    link.download = "Resume.pdf";
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+}
+async function loadVerificationStatus() {
+
+    const response = await fetch(
+        `${API_BASE_URL}/Verification/candidate-verification`
+    );
+
+    const data = await response.json();
+
+    // Aadhaar
+    if (data.aadhaarVerified) {
+
+        document.getElementById(
+            "aadhaar-status"
+        ).innerHTML =
+            "✅ Verified";
+
+        document.getElementById(
+            "aadhaar-number"
+        ).value =
+            data.aadhaarNumber;
+
+        const btn =
+            document.getElementById(
+                "aadhaar-btn"
+            );
+
+        btn.disabled = true;
+
+        btn.innerHTML =
+            "Verified";
+    }
+
+    // PAN
+    if (data.panVerified) {
+
+        document.getElementById(
+            "pan-status"
+        ).innerHTML =
+            "✅ Verified";
+
+        document.getElementById(
+            "pan-number"
+        ).value =
+            data.panNumber;
+
+        const btn =
+            document.getElementById(
+                "pan-btn"
+            );
+
+        btn.disabled = true;
+
+        btn.innerHTML =
+            "Verified";
+    }
+
+    // UAN
+    if (data.uanVerified) {
+
+        document.getElementById(
+            "uan-status"
+        ).innerHTML =
+            "✅ Verified";
+
+        document.getElementById(
+            "uan-number"
+        ).value =
+            data.uanNumber;
+
+        const btn =
+            document.getElementById(
+                "uan-btn"
+            );
+
+        btn.disabled = true;
+
+        btn.innerHTML =
+            "Verified";
+    }
+}

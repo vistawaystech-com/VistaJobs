@@ -398,6 +398,63 @@
                     </div>-->
                 </div><!-- /experienced -->
 
+                <div class="verification-section">
+
+                    <h3>Identification Details</h3>
+
+                    <!-- Aadhaar -->
+                    <div class="verify-row">
+                        <input type="text" id="aadhaar-number"
+                               placeholder="Enter Aadhaar Number">
+
+                        <button id="aadhaar-btn"
+                                class="verify-btn"
+                                onclick="verifyAadhaar()">
+
+                            Verify Aadhaar
+
+                        </button>
+
+                        <span class="verify-status"
+                              id="aadhaar-status"></span>
+</div>
+
+                    <!-- PAN -->
+                    <div class="verify-row">
+                        <input type="text" id="pan-number"
+                               placeholder="Enter PAN Number">
+
+                        <button id="pan-btn"
+                                class="verify-btn"
+                                onclick="verifyPan()">
+
+                            Verify PAN
+
+                        </button>
+
+                        <span class="verify-status"
+                              id="pan-status"></span>
+                    </div>
+
+                    <!-- UAN -->
+                    <div class="verify-row">
+                        <input type="text" id="uan-number"
+                               placeholder="Enter UAN Number">
+
+                        <button id="uan-btn"
+                                class="verify-btn"
+                                onclick="verifyUan()">
+
+                            Verify UAN
+
+                        </button>
+
+                        <span class="verify-status"
+                              id="uan-status"></span>
+                    </div>
+
+                </div>
+
                 <button class="btn-submit" onclick="submitJobseeker()">
                     🚀 Submit My Profile
                 </button>
@@ -533,7 +590,7 @@
             </div>
 
         </div>
-        
+
     </div><!-- /page-employer -->
     <!-- ═══════════════════════════════════════
          PAGE: ADMIN
@@ -792,6 +849,41 @@
 
             <button class="back-btn"
                     onclick="closeCandidateProfile()">
+
+                ← Back
+
+            </button>
+
+        </div>
+
+    </div>
+    <!-- Verification Modal -->
+
+    <div id="verificationModal"
+         class="profile-modal"
+         style="display:none;">
+
+        <div class="profile-card">
+
+            <div class="profile-header">
+
+                <div class="profile-title">
+                    Verification Details
+                </div>
+
+                <button class="close-btn"
+                        onclick="closeVerificationModal()">
+
+                    X
+
+                </button>
+
+            </div>
+
+            <div id="verificationContent"></div>
+
+            <button class="back-btn"
+                    onclick="closeVerificationModal()">
 
                 ← Back
 

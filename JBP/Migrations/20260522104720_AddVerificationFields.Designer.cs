@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace JBP.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260521064310_intialdb")]
-    partial class Intialdb
+    [Migration("20260522104720_AddVerificationFields")]
+    partial class AddVerificationFields
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -36,6 +36,9 @@ namespace JBP.Migrations
                     b.Property<string>("AadhaarNumber")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("AadhaarVerified")
+                        .HasColumnType("bit");
+
                     b.Property<string>("CandidateType")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -45,6 +48,9 @@ namespace JBP.Migrations
 
                     b.Property<string>("Email")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EmploymentHistory")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Experience")
@@ -61,6 +67,9 @@ namespace JBP.Migrations
                     b.Property<string>("PanNumber")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("PanVerified")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -76,6 +85,12 @@ namespace JBP.Migrations
                     b.Property<string>("Skills")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UanNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("UanVerified")
+                        .HasColumnType("bit");
 
                     b.HasKey("Id");
 

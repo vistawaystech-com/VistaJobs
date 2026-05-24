@@ -33,6 +33,9 @@ namespace JBP.Migrations
                     b.Property<string>("AadhaarNumber")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("AadhaarVerified")
+                        .HasColumnType("bit");
+
                     b.Property<string>("CandidateType")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -42,6 +45,9 @@ namespace JBP.Migrations
 
                     b.Property<string>("Email")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EmploymentHistory")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Experience")
@@ -58,6 +64,9 @@ namespace JBP.Migrations
                     b.Property<string>("PanNumber")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("PanVerified")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -73,6 +82,12 @@ namespace JBP.Migrations
                     b.Property<string>("Skills")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UanNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("UanVerified")
+                        .HasColumnType("bit");
 
                     b.HasKey("Id");
 
