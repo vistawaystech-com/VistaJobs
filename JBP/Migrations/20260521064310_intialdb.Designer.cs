@@ -13,7 +13,7 @@ namespace JBP.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     [Migration("20260521064310_intialdb")]
-    partial class intialdb
+    partial class Intialdb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

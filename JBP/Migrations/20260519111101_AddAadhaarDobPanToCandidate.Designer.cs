@@ -4,6 +4,7 @@ using JBP.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace JBP.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260519111101_AddAadhaarDobPanToCandidate")]
+    partial class AddAadhaarDobPanToCandidate : Migration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -33,9 +36,6 @@ namespace JBP.Migrations
                     b.Property<string>("AadhaarNumber")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("AadhaarVerified")
-                        .HasColumnType("bit");
-
                     b.Property<string>("CandidateType")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -45,9 +45,6 @@ namespace JBP.Migrations
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("EmploymentHistory")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Experience")
@@ -63,9 +60,6 @@ namespace JBP.Migrations
 
                     b.Property<string>("PanNumber")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("PanVerified")
-                        .HasColumnType("bit");
 
                     b.Property<string>("Phone")
                         .IsRequired()
@@ -83,55 +77,9 @@ namespace JBP.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("UanNumber")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("UanVerified")
-                        .HasColumnType("bit");
-
                     b.HasKey("Id");
 
                     b.ToTable("Candidates");
-                });
-
-            modelBuilder.Entity("JBP.Models.EmploymentHistory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CandidateId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Company")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("DisplayOrder")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Doe")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Doj")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Uan")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CandidateId");
-
-                    b.ToTable("EmploymentHistories");
                 });
 
             modelBuilder.Entity("JBP.Models.Job", b =>
@@ -236,63 +184,6 @@ namespace JBP.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("JBP.Models.VerificationLog", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("CandidateId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("DocumentType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Provider")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("RawResponse")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CandidateId");
-
-                    b.ToTable("VerificationLogs");
-                });
-
-            modelBuilder.Entity("JBP.Models.EmploymentHistory", b =>
-                {
-                    b.HasOne("JBP.Models.Candidate", "Candidate")
-                        .WithMany()
-                        .HasForeignKey("CandidateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Candidate");
-                });
-
-            modelBuilder.Entity("JBP.Models.VerificationLog", b =>
-                {
-                    b.HasOne("JBP.Models.Candidate", "Candidate")
-                        .WithMany()
-                        .HasForeignKey("CandidateId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("Candidate");
                 });
 #pragma warning restore 612, 618
         }

@@ -2,6 +2,25 @@
 
 const API_BASE_URL = "https://localhost:7250/api";
 
+// Login state is kept only for this browser session.
+// This prevents stale user details from appearing after closing/reopening the browser.
+const authStorage = sessionStorage;
+
+function clearSavedLogin() {
+
+    ["token", "role", "name", "email"].forEach(key => {
+        authStorage.removeItem(key);
+        localStorage.removeItem(key);
+    });
+}
+
+function clearLegacyPersistentLogin() {
+
+    ["token", "role", "name", "email"].forEach(key =>
+        localStorage.removeItem(key)
+    );
+}
+
 const Skills = {
     fresher: [],
     experienced: [],
@@ -11,6 +30,7 @@ let allJobs = [];
 /* PAGE NAVIGATION */
 function showPage(pageId) {
 
+    // index.html is a single-page UI. This toggles the visible section.
     document.querySelectorAll('.page').forEach(p => {
         p.classList.remove('active');
     });
@@ -186,6 +206,393 @@ function renderChip(val, type, inputEl) {
     inputEl.parentElement.insertBefore(chip, inputEl);
 }
 
+function setFieldValue(id, value) {
+
+    const field = document.getElementById(id);
+
+    if (field && value !== null && value !== undefined) {
+        field.value = value;
+    }
+}
+
+function setSelectValue(id, value) {
+
+    const field = document.getElementById(id);
+
+    if (!field || value === null || value === undefined) {
+        return;
+    }
+
+    const stringValue = String(value);
+
+    field.value = stringValue;
+
+    if (field.value !== stringValue) {
+        field.value = "";
+    }
+}
+
+function formatDateInput(value) {
+
+    if (!value) {
+        return "";
+    }
+
+    return String(value).split("T")[0];
+}
+
+function setSkills(type, skills) {
+
+    // Rebuild skill chips from the comma-separated value saved in the database.
+    const prefix =
+        type === "fresher"
+            ? "f"
+            : "e";
+
+    const wrap =
+        document.getElementById(`${prefix}-skills-wrap`);
+
+    const input =
+        document.getElementById(`${prefix}-skill-input`);
+
+    if (!wrap || !input) {
+        return;
+    }
+
+    wrap.querySelectorAll(".skill-chip")
+        .forEach(chip => chip.remove());
+
+    Skills[type] = (skills || "")
+        .split(",")
+        .map(skill => skill.trim())
+        .filter(Boolean);
+
+    Skills[type].forEach(skill =>
+        renderChip(skill, type, input)
+    );
+}
+
+function getTokenPayload() {
+
+    const token =
+        authStorage.getItem("token");
+
+    if (!token) {
+        return {};
+    }
+
+    try {
+        return JSON.parse(
+            atob(token.split(".")[1])
+        );
+    } catch (error) {
+        return {};
+    }
+}
+
+function getLoggedInEmail() {
+
+    // New login response contains email. JWT fallback keeps older sessions working.
+    const payload = getTokenPayload();
+
+    return authStorage.getItem("email") ||
+        payload.email ||
+        payload[
+        "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+        ] ||
+        "";
+}
+
+function clearCandidateForm(prefix) {
+
+    // Clear all fields before a new user/profile path opens the form.
+    [
+        "name",
+        "email",
+        "phone",
+        "dob",
+        "pan",
+        "aadhaar",
+        "address",
+        "pref-loc",
+        "salary",
+        "resume",
+        "qual",
+        "year",
+        "percent",
+        "college",
+        "role",
+        "uan",
+        "company",
+        "jobtitle",
+        "exp",
+        "notice",
+        "curr-sal",
+        "about"
+    ].forEach(field => {
+
+        const element =
+            document.getElementById(`${prefix}-${field}`);
+
+        if (!element) {
+            return;
+        }
+
+        if (element.type === "file") {
+            element.value = "";
+            return;
+        }
+
+        element.value = "";
+    });
+
+    const type =
+        prefix === "e"
+            ? "experienced"
+            : "fresher";
+
+    setSkills(type, "");
+    clearIdentificationFields(prefix);
+}
+
+function prefillLoggedInIdentity(prefix) {
+
+    setFieldValue(
+        `${prefix}-name`,
+        authStorage.getItem("name") || ""
+    );
+
+    setFieldValue(
+        `${prefix}-email`,
+        getLoggedInEmail()
+    );
+}
+
+function resetJobseekerForms(prefillIdentity = false) {
+
+    // Fresh profile creation must not reuse values from a previous login.
+    loadedCandidateType = null;
+
+    clearCandidateForm("f");
+    clearCandidateForm("e");
+
+    if (prefillIdentity) {
+        prefillLoggedInIdentity("f");
+        prefillLoggedInIdentity("e");
+    }
+}
+
+let submittedCandidate = null;
+
+function setJobseekerHeader(submitted) {
+
+    const header =
+        document.querySelector("#page-jobseeker .form-header");
+
+    if (!header) {
+        return;
+    }
+
+    const title = header.querySelector("h2");
+    const copy = header.querySelector("p");
+
+    if (title) {
+        title.textContent = submitted
+            ? "Your Profile"
+            : "Create Your Profile";
+    }
+
+    if (copy) {
+        copy.textContent = submitted
+            ? "Your submitted details are saved and ready for employer matches."
+            : "Choose fresher or experienced to complete your jobseeker profile.";
+    }
+}
+
+function escapeHtml(value) {
+
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function displayValue(value) {
+
+    if (value === null || value === undefined || value === "") {
+        return "Not provided";
+    }
+
+    return escapeHtml(value);
+}
+
+function renderSubmittedBadge(label, verified) {
+
+    return `
+        <span class="submitted-badge ${verified ? "ok" : ""}">
+            ${verified ? "Verified" : "Pending"} ${escapeHtml(label)}
+        </span>
+    `;
+}
+
+function renderSubmittedSkills(skills) {
+
+    const list = (skills || "")
+        .split(",")
+        .map(skill => skill.trim())
+        .filter(Boolean);
+
+    if (!list.length) {
+        return `<span class="submitted-profile-value">Not provided</span>`;
+    }
+
+    return list.map(skill => `
+        <span class="submitted-skill">${escapeHtml(skill)}</span>
+    `).join("");
+}
+
+function renderSubmittedProfile(candidate) {
+
+    // Existing jobseeker profile: show a read-only summary instead of the create form.
+    submittedCandidate = candidate;
+    setJobseekerHeader(true);
+
+    const profile =
+        document.getElementById("jobseeker-submitted-profile");
+
+    if (!profile) {
+        return;
+    }
+
+    const type =
+        candidate.candidateType === "experienced"
+            ? "Experienced"
+            : "Fresher";
+
+    const resumeAction =
+        candidate.resumePath
+            ? `<button type="button" class="btn-secondary" onclick="viewResume('${escapeHtml(candidate.resumePath)}')">View Resume</button>`
+            : "";
+
+    profile.innerHTML = `
+        <div class="submitted-profile-header">
+            <div>
+                <h3>Profile Already Submitted</h3>
+                <p>Your jobseeker profile is ready and visible to matching employers.</p>
+            </div>
+            <span class="submitted-profile-type">${type}</span>
+        </div>
+
+        <div class="submitted-profile-body">
+            <div class="submitted-profile-item">
+                <span class="submitted-profile-label">Full Name</span>
+                <span class="submitted-profile-value">${displayValue(candidate.fullName)}</span>
+            </div>
+            <div class="submitted-profile-item">
+                <span class="submitted-profile-label">Email</span>
+                <span class="submitted-profile-value">${displayValue(candidate.email)}</span>
+            </div>
+            <div class="submitted-profile-item">
+                <span class="submitted-profile-label">Phone</span>
+                <span class="submitted-profile-value">${displayValue(candidate.phone)}</span>
+            </div>
+            <div class="submitted-profile-item">
+                <span class="submitted-profile-label">DOB</span>
+                <span class="submitted-profile-value">${displayValue(formatDateInput(candidate.dob))}</span>
+            </div>
+            <div class="submitted-profile-item">
+                <span class="submitted-profile-label">Experience</span>
+                <span class="submitted-profile-value">${displayValue(candidate.experience)} year(s)</span>
+            </div>
+            <div class="submitted-profile-item">
+                <span class="submitted-profile-label">Expected Salary</span>
+                <span class="submitted-profile-value">${displayValue(candidate.salary)}</span>
+            </div>
+            <div class="submitted-profile-item">
+                <span class="submitted-profile-label">Location</span>
+                <span class="submitted-profile-value">${displayValue(candidate.location)}</span>
+            </div>
+            <div class="submitted-profile-item">
+                <span class="submitted-profile-label">Company</span>
+                <span class="submitted-profile-value">${escapeHtml(renderEmploymentHistoryText(candidate.employmentHistory))}</span>
+            </div>
+            <div class="submitted-profile-item full">
+                <span class="submitted-profile-label">Skills</span>
+                <div class="submitted-profile-skills">${renderSubmittedSkills(candidate.skills)}</div>
+            </div>
+            <div class="submitted-profile-item full">
+                <span class="submitted-profile-label">Verification</span>
+                <div class="submitted-profile-badges">
+                    ${renderSubmittedBadge("Aadhaar", candidate.aadhaarVerified)}
+                    ${renderSubmittedBadge("PAN", candidate.panVerified)}
+                    ${renderSubmittedBadge("UAN", candidate.uanVerified)}
+                </div>
+            </div>
+        </div>
+
+        <div class="submitted-profile-actions">
+            ${resumeAction}
+            <button type="button" class="btn-secondary" onclick="editSubmittedProfile()">Update Profile</button>
+        </div>
+    `;
+
+    profile.classList.remove("hidden");
+    document.getElementById("jobseeker-type-choice")
+        ?.classList.add("hidden");
+    document.getElementById("jobseeker-tab-switch")
+        ?.classList.add("hidden");
+    document.getElementById("jobseeker-form-card")
+        ?.classList.add("hidden");
+}
+
+function fillCandidateForm(candidate) {
+
+    // "Update Profile" reopens the matching form with saved values prefilled.
+    const type =
+        candidate.candidateType === "experienced"
+            ? "experienced"
+            : "fresher";
+
+    const prefix =
+        type === "experienced"
+            ? "e"
+            : "f";
+
+    openJobseekerForm(type);
+
+    setFieldValue(`${prefix}-name`, candidate.fullName || "");
+    setFieldValue(`${prefix}-email`, candidate.email || "");
+    setFieldValue(`${prefix}-phone`, candidate.phone || "");
+    setFieldValue(`${prefix}-dob`, formatDateInput(candidate.dob));
+    setFieldValue(`${prefix}-pan`, candidate.panNumber || "");
+    setFieldValue(`${prefix}-aadhaar`, candidate.aadhaarNumber || "");
+    setFieldValue(`${prefix}-pref-loc`, candidate.location || "");
+    setSelectValue(`${prefix}-salary`, candidate.salary || "");
+    setSkills(type, candidate.skills);
+
+    if (type === "experienced") {
+        setFieldValue("e-uan", candidate.uanNumber || "");
+        setSelectValue("e-exp", candidate.experience);
+        setFieldValue("e-company", candidate.employmentHistory || "");
+    }
+}
+
+function editSubmittedProfile() {
+
+    // Move from summary mode to edit mode for the submitted candidate.
+    if (!submittedCandidate) {
+        return;
+    }
+
+    document.getElementById("jobseeker-submitted-profile")
+        ?.classList.add("hidden");
+
+    fillCandidateForm(submittedCandidate);
+    loadVerificationStatus();
+}
+
 function removeSkill(btn, val, type) {
 
     Skills[type] = Skills[type].filter(s => s !== val);
@@ -276,6 +683,7 @@ function filterCategory(button, category) {
 
 /* TAB SWITCH */
 let activeTab = 'fresher';
+let loadedCandidateType = null;
 
 function switchTab(type) {
 
@@ -292,6 +700,66 @@ function switchTab(type) {
 
     document.getElementById('tab-experienced')
         .classList.toggle('active', type === 'experienced');
+
+    clearInactiveCandidateVerification(type);
+}
+
+function showJobseekerTypeChooser() {
+
+    resetJobseekerForms(true);
+    setJobseekerHeader(false);
+
+    document.getElementById("jobseeker-submitted-profile")
+        ?.classList.add("hidden");
+
+    document.getElementById("jobseeker-type-choice")
+        ?.classList.remove("hidden");
+
+    document.getElementById("jobseeker-tab-switch")
+        ?.classList.add("hidden");
+
+    document.getElementById("jobseeker-form-card")
+        ?.classList.add("hidden");
+
+    activeTab = "fresher";
+
+    switchTab("fresher");
+}
+
+function openJobseekerForm(type) {
+
+    setJobseekerHeader(false);
+
+    document.getElementById("jobseeker-submitted-profile")
+        ?.classList.add("hidden");
+
+    if (!loadedCandidateType) {
+        const prefix =
+            type === "experienced"
+                ? "e"
+                : "f";
+
+        clearCandidateForm(prefix);
+        prefillLoggedInIdentity(prefix);
+    }
+
+    document.getElementById("jobseeker-type-choice")
+        ?.classList.add("hidden");
+
+    document.getElementById("jobseeker-tab-switch")
+        ?.classList.remove("hidden");
+
+    document.getElementById("jobseeker-form-card")
+        ?.classList.remove("hidden");
+
+    switchTab(type);
+
+    loadVerificationStatus();
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
 }
 
 /* VALIDATION */
@@ -310,9 +778,20 @@ function validateUAN(uan) {
     return /^\d{12}$/.test(uan);
 }
 
+function validatePAN(pan) {
+
+    return /^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan);
+}
+
+function validateAadhaar(aadhaar) {
+
+    return /^\d{12}$/.test(aadhaar);
+}
+
 /* SUBMIT JOBSEEKER */
 function submitJobseeker() {
 
+    // One submit path handles both fresher and experienced forms.
     const isFresher = activeTab === 'fresher';
 
     const p = isFresher ? 'f' : 'e';
@@ -334,14 +813,16 @@ function submitJobseeker() {
 
     if (isFresher) {
 
-        email = email = document.getElementById("f-email")?.value.trim() || "";
+        email = document.getElementById("f-email")?.value.trim() ||
+            getLoggedInEmail();
 
         phone = phone = document.getElementById("f-phone")?.value.trim() || "";
 
 
     } else {
 
-        email = document.getElementById("e-email")?.value.trim() || ""
+        email = document.getElementById("e-email")?.value.trim() ||
+            getLoggedInEmail();
 
         phone = document.getElementById("e-phone")?.value.trim() || ""
 
@@ -383,28 +864,55 @@ function submitJobseeker() {
         document.getElementById(`${p}-aadhaar`)?.value || "";
 
     const panNumber =
-        document.getElementById(`${p}-pan`)?.value || "";   
+        document.getElementById(`${p}-pan`)?.value || "";
+
+    if (!validateAadhaar(aadhaarNumber)) {
+        showToast("Invalid Aadhaar", "error");
+        return;
+    }
+
+    if (!validatePAN(panNumber.toUpperCase())) {
+        showToast("Invalid PAN", "error");
+        return;
+    }
+
+    const experience =
+        isFresher
+            ? 0
+            : parseInt(document.getElementById("e-exp")?.value, 10) || 0;
+
+    const location =
+        document.getElementById(`${p}-pref-loc`)?.value.trim() || "Open";
+
+    const employmentHistory =
+        isFresher
+            ? ""
+            : document.getElementById("e-company")?.value.trim() || "";
+
     const newCandidate = {
 
+        // Backend uses email to insert a new candidate or update the existing one.
         fullName: name,
 
         email: email,
 
         phone: phone,
 
-        uan: isFresher ? null : uan,
+        uanNumber: isFresher ? null : uan,
 
         dob: dob,
 
         aadhaarNumber: aadhaarNumber,
 
-        panNumber: panNumber,
+        panNumber: panNumber.toUpperCase(),
 
-        experience: 0,
+        employmentHistory: employmentHistory,
+
+        experience: experience,
 
         skills: skills.join(","),
 
-        location: "Open",
+        location: location,
 
         salary: salary,
 
@@ -417,7 +925,7 @@ method: 'POST',
 
         headers: {
             "Content-Type": "application/json",
-            "Authorization": "Bearer " + localStorage.getItem("token")
+            "Authorization": "Bearer " + authStorage.getItem("token")
         },
 
 body: JSON.stringify(newCandidate)
@@ -435,14 +943,23 @@ body: JSON.stringify(newCandidate)
             return response.json();
         })
 
-    .then(data => {
+    .then(async data => {
 
         console.log(data);
+
+        const resume =
+            await uploadResume(data.id, { silentIfMissing: true });
+
+        if (resume?.path) {
+            data.resumePath = resume.path;
+        }
 
         showModal(
             "🎉 Success",
             "Profile submitted successfully!"
         );
+
+        renderSubmittedProfile(data);
     })
 
     .catch(error => {
@@ -458,6 +975,7 @@ async function findCandidates() {
 
     try {
 
+        // Employer enters requirements here; matches are built from Candidate rows.
         // Employer form values
         const companyName =
             document.getElementById('emp-company')?.value.trim();
@@ -493,7 +1011,7 @@ async function findCandidates() {
             return;
         }
 
-        // Create Job Object
+        // Create the job row first, then show matching candidates below the form.
         const newJob = {
 
             companyName,
@@ -532,13 +1050,25 @@ const response =
 const candidates =
     await response.json();
 
-// Match Candidates
+// Match candidates against every selected skill chip, not only the first chip.
+const requiredSkills =
+    Skills.employer
+        .map(skill => skill.trim().toLowerCase())
+        .filter(Boolean);
+
 const filtered = candidates.filter(c => {
 
-    return c.skills.toLowerCase().includes(
+    const candidateSkills =
+        (c.skills || "")
+            .split(",")
+            .map(skill => skill.trim().toLowerCase())
+            .filter(Boolean);
 
-        Skills.employer[0]?.toLowerCase() || ""
-
+    return requiredSkills.some(requiredSkill =>
+        candidateSkills.some(candidateSkill =>
+            candidateSkill.includes(requiredSkill) ||
+            requiredSkill.includes(candidateSkill)
+        )
     );
 });
 
@@ -564,6 +1094,7 @@ showToast(
 
 function renderCandidates(list) {
 
+    // Employer matching result card. Verification and resume values come from Candidate rows.
     const container =
         document.getElementById('candidatesList');
 
@@ -594,12 +1125,83 @@ function renderCandidates(list) {
                 ${c.email}
             </div>
 
+            <div class="verification-cards">
+
+    <span class="verification-pill">
+
+        ${c.aadhaarVerified
+            ? "✅ Aadhaar Verified"
+            : "❌ Aadhaar Pending"}
+
+    </span>
+
+    <span class="verification-pill">
+
+        ${c.panVerified
+            ? "✅ PAN Verified"
+            : "❌ PAN Pending"}
+
+    </span>
+
+    <span class="verification-pill">
+
+        ${c.uanVerified
+            ? "✅ UAN Verified"
+            : "❌ UAN Pending"}
+
+    </span>
+
+   <div class="resume-actions">
+
+    <span class="verification-pill">
+
+        ${c.resumePath
+            ? "📄 Resume Uploaded"
+            : "❌ No Resume"}
+
+    </span>
+
+    ${c.resumePath
+
+            ?
+
+            `
+        <button class="resume-btn"
+            onclick="viewResume('${c.resumePath}')">
+
+            View Resume
+
+        </button>
+
+        <button class="resume-btn"
+            onclick="downloadResume('${c.resumePath}')">
+
+            Download
+
+        </button>
+        `
+
+            :
+
+            ""
+    }
+
+</div>
+
+</div>
+
             <button class="btn-primary"
                 onclick='viewCandidateProfile(${JSON.stringify(JSON.stringify(c))})'>
 
                 View Profile
 
             </button>
+            <button class="btn-primary"
+    onclick="viewVerificationDetails(${c.id})">
+
+    View Details
+
+</button>
 
         </div>
 
@@ -713,22 +1315,25 @@ async function handleLogin() {
 
         const data = await response.json();
 
-        // Store JWT Token
-        localStorage.setItem(
+        // Store JWT and display details for navbar, role routing, and API calls.
+        authStorage.setItem(
             "token",
             data.token
         );
 
-        localStorage.setItem(
+        authStorage.setItem(
             "role",
             data.role
         );
 
-        localStorage.setItem(
+        authStorage.setItem(
             "name",
             data.name
         );
-
+        authStorage.setItem(
+            "email",
+            data.email || getLoggedInEmail()
+        );
         showToast(
             "Login successful",
             "success"
@@ -763,6 +1368,9 @@ async function handleLogin() {
 
     showPage("jobseeker");
 
+    // Show chooser first so the page is not blank while profile lookup runs.
+    showJobseekerTypeChooser();
+
     loadCandidateProfile();
 
     // loadAppliedJobs();
@@ -780,12 +1388,7 @@ async function handleLogin() {
 }
 /* LOGOUT */
 document.getElementById("logout-btn").addEventListener("click",function logout() {
-
-    localStorage.removeItem("token");
-
-    localStorage.removeItem("role");
-
-    localStorage.removeItem("name");
+    clearSavedLogin();
 
     // Also clear any lingering form values
     // const rn = document.getElementById('register-name'); if (rn) rn.value = '';
@@ -814,13 +1417,13 @@ document.getElementById("logout-btn").addEventListener("click",function logout()
 function updateNavbar() {
 
     const token =
-        localStorage.getItem("token");
+        authStorage.getItem("token");
 
     const role =
-        localStorage.getItem("role");
+        authStorage.getItem("role");
 
     const name =
-        localStorage.getItem("name");
+        authStorage.getItem("name");
 
     const userArea =
         document.getElementById("user-area");
@@ -828,82 +1431,86 @@ function updateNavbar() {
     const welcomeUser =
         document.getElementById("welcome-user");
 
-    const logoutBtn =
-        document.getElementById("logout-btn");
+    const loginBtn =
+        document.getElementById("loginBtn");
+
+    const registerBtn =
+        document.getElementById("registerBtn");
 
     if (token) {
 
-        userArea.style.display = "flex";
+        if (loginBtn) loginBtn.style.display = "none";
 
-        welcomeUser.innerText =
+        if (registerBtn) registerBtn.style.display = "none";
+
+        if (userArea) userArea.style.display = "flex";
+
+        if (welcomeUser) welcomeUser.innerText =
             `${name} (${role})`;
 
     } else {
 
-        userArea.style.display = "none";
+        if (loginBtn) loginBtn.style.display = "inline-block";
+
+        if (registerBtn) registerBtn.style.display = "inline-block";
+
+        if (userArea) userArea.style.display = "none";
+
+        if (welcomeUser) welcomeUser.innerText = "";
     }
 }
 async function loadCandidateProfile() {
 
     try {
 
+        // On jobseeker login:
+        // 200 shows submitted profile summary, 404 shows fresher/experienced chooser.
         const token =
-            localStorage.getItem("token");
+            authStorage.getItem("token");
 
-        const email =
-            JSON.parse(
-                atob(token.split('.')[1])
-            ).email;
+        if (!token) {
+            showJobseekerTypeChooser();
+            return;
+        }
 
         const response =
             await fetch(
-                `${API_BASE_URL}/Candidates`,
-{
-    headers: {
-        Authorization:
-        `Bearer ${token}`
-    }
-});
 
-const candidates =
-    await response.json();
+                `${API_BASE_URL}/Candidates/my-profile`,
 
-const candidate =
-    candidates.find(
-        c => c.email === email
-    );
+                {
+                    headers: {
+                        Authorization:
+                            `Bearer ${token}`
+                    }
+                });
 
-if (!candidate) return;
+        if (response.status === 404) {
+            // No submitted profile yet.
+            showJobseekerTypeChooser();
+            return;
+        }
 
-document.getElementById(
-    "candidate-profile"
-).innerHTML = `
+        if (!response.ok) {
+            throw new Error("Unable to load candidate profile");
+        }
 
-            <p>
-                <strong>Name:</strong>
-                ${candidate.fullName}
-            </p>
+        const candidate =
+            await response.json();
 
-            <p>
-                <strong>Email:</strong>
-                ${candidate.email}
-            </p>
+        if (!candidate) return;
 
-            <p>
-                <strong>Skills:</strong>
-                ${candidate.skills}
-            </p>
+        loadedCandidateType =
+            candidate.candidateType || null;
 
-            <p>
-                <strong>Experience:</strong>
-                ${candidate.experience}
-            </p>
-        `;
+        // Existing profile: show read-only summary instead of opening the form.
+        renderSubmittedProfile(candidate);
 
     } catch (error) {
 
-    console.error(error);
-}
+        console.error(error);
+        showJobseekerTypeChooser();
+    }
 }
 // async function loadAppliedJobs() {
 
@@ -971,114 +1578,153 @@ document.getElementById(
 //     console.error(error);
 // }
 // }
-async function uploadResume() {
+function getSelectedResumeFile() {
+
+    const isFresher = activeTab === "fresher";
+
+    return isFresher
+        ? document.getElementById("f-resume")?.files[0]
+        : document.getElementById("resume-file")?.files[0];
+}
+
+async function getCurrentCandidateId(token) {
+
+    const response =
+        await fetch(
+            `${API_BASE_URL}/Candidates/my-profile`,
+            {
+                headers: {
+                    Authorization:
+                        `Bearer ${token}`
+                }
+            });
+
+    if (!response.ok) {
+        return null;
+    }
+
+    const candidate =
+        await response.json();
+
+    return candidate?.id || null;
+}
+
+async function uploadResume(candidateId = null, options = {}) {
+
+    // Used by the upload button and silently after profile submit.
+    const silentIfMissing =
+        options.silentIfMissing === true;
 
     try {
 
         const token =
-            localStorage.getItem("token");
-
-        const fileInput =
-            document.getElementById(
-                "resume-file"
-            );
+            authStorage.getItem("token");
 
         const file =
-            fileInput.files[0];
+            getSelectedResumeFile();
 
         if (!file) {
 
+            if (!silentIfMissing) {
+                showToast(
+                    "Please select resume",
+                    "error"
+                );
+            }
+
+            return null;
+        }
+
+        const resolvedCandidateId =
+            candidateId ||
+            await getCurrentCandidateId(token);
+
+        if (!resolvedCandidateId) {
+
             showToast(
-                "Select PDF file",
+                "Candidate not found",
                 "error"
             );
 
-            return;
+            return null;
         }
 
-        const response =
+        const formData =
+            new FormData();
+
+        formData.append(
+            "file",
+            file
+        );
+
+        const uploadResponse =
             await fetch(
-                `${API_BASE_URL}/Candidates`,
-{
-    headers: {
-        Authorization:
-        `Bearer ${token}`
-    }
-});
+                `${API_BASE_URL}/Candidates/upload-resume/${resolvedCandidateId}`,
+                {
+                    method: "POST",
+                    headers: {
+                        Authorization:
+                            `Bearer ${token}`
+                    },
+                    body: formData
+                });
 
-const candidates =
-    await response.json();
+        let data = null;
 
-const email =
-    JSON.parse(
-        atob(token.split('.')[1])
-    ).email;
+        try {
+            data = await uploadResponse.json();
+        } catch (error) {
+            data = null;
+        }
 
-const candidate =
-    candidates.find(
-        c => c.email === email
-    );
+        if (!uploadResponse.ok) {
+            throw new Error(
+                data?.message ||
+                data?.error ||
+                "Upload failed"
+            );
+        }
 
-if (!candidate) return;
+        const resumeStatus =
+            document.getElementById("resume-status");
 
-const formData =
-    new FormData();
+        if (resumeStatus) {
+            resumeStatus.innerHTML = `
+                Resume Uploaded:
+                <a href="${data.url || API_BASE_URL.replace('/api', '') + data.path}"
+                    target="_blank">
+                    View Resume
+                </a>
+            `;
+        }
 
-formData.append("file", file);
+        if (!silentIfMissing) {
+            showToast(
+                "Resume uploaded successfully",
+                "success"
+            );
+        }
 
-const uploadResponse =
-    await fetch(
-
-        `${API_BASE_URL}/Candidates/upload-resume/${candidate.id}`,
-
-        {
-            method: "POST",
-
-            headers: {
-                Authorization:
-                    `Bearer ${token}`
-            },
-
-            body: formData
-        });
-
-const data =
-    await uploadResponse.json();
-
-document.getElementById(
-    "resume-status"
-).innerHTML = `
-
-            Resume Uploaded:
-            <a href="${data.path}"
-                target="_blank">
-
-                View Resume
-
-            </a>
-        `;
-
-showToast(
-    "Resume uploaded successfully",
-    "success"
-);
+        return data;
 
     } catch (error) {
 
-    console.error(error);
+        console.error(error);
 
-    showToast(
-        "Upload failed",
-        "error"
-    );
-}
+        showToast(
+            error.message || "Upload failed",
+            "error"
+        );
+
+        return null;
+    }
 }
 async function loadEmployerDashboard() {
 
     try {
 
         const token =
-            localStorage.getItem("token");
+            authStorage.getItem("token");
 
         const response =
             await fetch(
@@ -1188,7 +1834,7 @@ async function loadAdminDashboard() {
     try {
 
         const token =
-            localStorage.getItem("token");
+            authStorage.getItem("token");
 
         // DASHBOARD
         const dashboardResponse =
@@ -1447,7 +2093,7 @@ async function applyJob(jobId, jobTitle) {
     try {
 
         const token =
-            localStorage.getItem("token");
+            authStorage.getItem("token");
 
         if (!token) {
 
@@ -1473,7 +2119,7 @@ async function applyJob(jobId, jobTitle) {
             jobTitle,
 
             candidateName:
-                localStorage.getItem("name"),
+                authStorage.getItem("name"),
 
             candidateEmail:
                 payload.email
@@ -1554,18 +2200,20 @@ if (form) form.addEventListener('submit', submitProfile);
 /* INIT */
 document.addEventListener('DOMContentLoaded', () => {
 
+    renderAllVerificationFields();
+    clearLegacyPersistentLogin();
 
     updateNavbar();
     // loadHomepageJobs();
         
-    const token = localStorage.getItem("token");
+    const token = authStorage.getItem("token");
 
-    const role = localStorage.getItem("role");
+    const role = authStorage.getItem("role");
 
     if (token && role) {
 
         showToast(
-            `Welcome back ${localStorage.getItem("name")} `,
+            `Welcome back ${authStorage.getItem("name")} `,
             "success"
         );
 
@@ -1593,3 +2241,623 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+function normalizeEmploymentHistory(history) {
+
+    if (!history) {
+        return [];
+    }
+
+    if (Array.isArray(history)) {
+        return history;
+    }
+
+    if (typeof history === "string") {
+        const trimmed = history.trim();
+
+        if (!trimmed) {
+            return [];
+        }
+
+        try {
+            const parsed = JSON.parse(trimmed);
+
+            if (Array.isArray(parsed)) {
+                return parsed;
+            }
+        } catch {
+            return trimmed
+                .split(",")
+                .map(company => ({
+                    company: company.trim(),
+                    doj: "",
+                    doe: ""
+                }))
+                .filter(job => job.company);
+        }
+    }
+
+    return [];
+}
+
+function renderEmploymentHistory(history) {
+
+    const jobs = normalizeEmploymentHistory(history);
+
+    if (!jobs.length) {
+        return `
+            <div class="employment-empty">
+                No employment history found
+            </div>
+        `;
+    }
+
+    return jobs
+        .map(job => {
+            const company = job.company || job.Company || "Unknown Company";
+            const doj = job.doj || job.DOJ || "";
+            const doe = job.doe || job.DOE || "";
+
+            return `
+                <div class="employment-card">
+                    <strong>${escapeHtml(company)}</strong>
+                    <span>DOJ: ${escapeHtml(doj || "N/A")}</span>
+                    <span>DOE: ${escapeHtml(doe || "N/A")}</span>
+                </div>
+            `;
+        })
+        .join("");
+}
+
+function renderEmploymentHistoryText(history) {
+
+    const jobs = normalizeEmploymentHistory(history);
+
+    if (!jobs.length) {
+        return "Not provided";
+    }
+
+    return jobs
+        .map(job => job.company || job.Company || "Unknown Company")
+        .join(", ");
+}
+
+function showEmploymentHistoryModal(data) {
+
+    const modal = document.getElementById("verificationModal");
+    const content = document.getElementById("verificationContent");
+
+    if (!modal || !content) {
+        return;
+    }
+
+    modal.style.display = "flex";
+    content.innerHTML = `
+        <div class="profile-info">
+            <strong>UAN Number:</strong>
+            ${escapeHtml(data.uanNumber || data.uan || "N/A")}
+        </div>
+        <div class="profile-info">
+            <strong>Status:</strong>
+            <span class="verified-badge">Verified</span>
+        </div>
+        <div class="profile-info">
+            <strong>Employment History:</strong>
+            <div class="employment-list">
+                ${renderEmploymentHistory(data.employmentHistory)}
+            </div>
+        </div>
+    `;
+}
+
+async function viewVerificationDetails(id) {
+
+    const response = await fetch(
+        `${API_BASE_URL}/Candidates/${id}`
+    );
+
+    const data = await response.json();
+
+    document.getElementById(
+        "verificationModal"
+    ).style.display = "flex";
+
+    document.getElementById(
+        "verificationContent"
+    ).innerHTML = `
+
+        <div class="profile-info">
+
+            <strong>Full Name:</strong>
+
+            ${data.fullName}
+
+        </div>
+
+        <div class="profile-info">
+
+            <strong>DOB:</strong>
+
+            ${formatDateInput(data.dob) || "N/A"}
+
+        </div>
+
+        <div class="profile-info">
+
+            <strong>PAN Number:</strong>
+
+            ${data.panNumber || "N/A"}
+
+        </div>
+
+        <div class="profile-info">
+
+            <strong>Aadhaar Number:</strong>
+
+            ${data.aadhaarNumber || "N/A"}
+
+        </div>
+
+        <div class="profile-info">
+
+            <strong>UAN Number:</strong>
+
+            ${data.uanNumber || "N/A"}
+
+        </div>
+
+        <div class="profile-info">
+
+            <strong>Status:</strong>
+
+            <span class="verified-badge">
+
+    ✔ Verified
+
+</span>
+
+        </div>
+
+        <div class="profile-info">
+
+    <strong>Employment History:</strong>
+
+    <div class="employment-list">
+        ${renderEmploymentHistory(data.employmentHistory)}
+    </div>
+
+</div>
+    `;
+}
+function closeVerificationModal() {
+
+    document.getElementById(
+        "verificationModal"
+    ).style.display = "none";
+}
+function viewResume(path) {
+
+    window.open(getResumeUrl(path), "_blank");
+}
+
+function downloadResume(path) {
+
+    const link =
+        document.createElement("a");
+
+    link.href = getResumeUrl(path);
+
+    link.download = "Resume.pdf";
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+}
+
+function getResumeUrl(path) {
+
+    if (!path) {
+        return "";
+    }
+
+    if (path.startsWith("http")) {
+        return path;
+    }
+
+    return `${API_BASE_URL.replace("/api", "")}${path}`;
+}
+async function legacyLoadVerificationStatus() {
+
+    const response = await fetch(
+        `${API_BASE_URL}/Verification/candidate-verification`
+    );
+
+    const data = await response.json();
+
+    // Aadhaar
+    if (data.aadhaarVerified) {
+
+        document.getElementById(
+            "aadhaar-status"
+        ).innerHTML =
+            "✅ Verified";
+
+        document.getElementById(
+            "aadhaar-number"
+        ).value =
+            data.aadhaarNumber;
+
+        const btn =
+            document.getElementById(
+                "aadhaar-btn"
+            );
+
+        btn.disabled = true;
+
+        btn.innerHTML =
+            "Verified";
+    }
+
+    // PAN
+    if (data.panVerified) {
+
+        document.getElementById(
+            "pan-status"
+        ).innerHTML =
+            "✅ Verified";
+
+        document.getElementById(
+            "pan-number"
+        ).value =
+            data.panNumber;
+
+        const btn =
+            document.getElementById(
+                "pan-btn"
+            );
+
+        btn.disabled = true;
+
+        btn.innerHTML =
+            "Verified";
+    }
+
+    // UAN
+    if (data.uanVerified) {
+
+        document.getElementById(
+            "uan-status"
+        ).innerHTML =
+            "✅ Verified";
+
+        document.getElementById(
+            "uan-number"
+        ).value =
+            data.uanNumber;
+
+        const btn =
+            document.getElementById(
+                "uan-btn"
+            );
+
+        btn.disabled = true;
+
+        btn.innerHTML =
+            "Verified";
+    }
+}
+
+function getVerificationElements(prefix, type) {
+
+    return {
+        input: document.getElementById(`${prefix}-${type}`),
+        status: document.getElementById(`${prefix}-${type}-status`),
+        button: document.getElementById(`${prefix}-${type}-btn`)
+    };
+}
+
+function renderVerificationFields(type) {
+
+    const prefix =
+        type === "experienced"
+            ? "e"
+            : "f";
+
+    const mount =
+        document.getElementById(`${prefix}-verification-fields`);
+
+    if (!mount) {
+        return;
+    }
+
+    const fields = [
+        {
+            type: "aadhaar",
+            label: "Aadhaar Number",
+            placeholder: "123412341234",
+            maxLength: 12,
+            hint: "",
+            action: `verifyAadhaar('${prefix}')`
+        },
+        {
+            type: "pan",
+            label: "PAN Number",
+            placeholder: "ABCDE1234F",
+            maxLength: 10,
+            hint: "",
+            action: `verifyPan('${prefix}')`
+        }
+    ];
+
+    if (type === "experienced") {
+        fields.push({
+            type: "uan",
+            label: "UAN",
+            placeholder: "123456789012",
+            maxLength: 12,
+            hint: `<span class="hint">(12-digit)</span>`,
+            action: `verifyUan('${prefix}')`
+        });
+    }
+
+    mount.innerHTML = fields
+        .map((field, index) => `
+            ${index % 2 === 0 ? `<div class="form-row">` : ""}
+                <div class="form-group">
+                    <label for="${prefix}-${field.type}">
+                        ${field.label} <span class="req">*</span> ${field.hint}
+                    </label>
+                    <input type="text"
+                           id="${prefix}-${field.type}"
+                           placeholder="${field.placeholder}"
+                           maxlength="${field.maxLength}"
+                           autocomplete="off" />
+                    <div class="verify-actions">
+                        <button type="button"
+                                id="${prefix}-${field.type}-btn"
+                                class="verify-btn"
+                                onclick="${field.action}">
+                            Verify ${field.label.replace(" Number", "")}
+                        </button>
+                        <span class="verify-status"
+                              id="${prefix}-${field.type}-status"></span>
+                    </div>
+                </div>
+            ${index % 2 === 1 || index === fields.length - 1 ? `</div>` : ""}
+        `)
+        .join("");
+}
+
+function renderAllVerificationFields() {
+
+    renderVerificationFields("fresher");
+    renderVerificationFields("experienced");
+}
+
+async function postVerification(path, number) {
+
+    // Shared POST helper for Aadhaar, PAN, and UAN verification calls.
+    const token =
+        authStorage.getItem("token");
+
+    const response = await fetch(
+        `${API_BASE_URL}/Verification/${path}`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ number })
+        });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(data.message || "Verification failed");
+    }
+
+    return data;
+}
+
+function completeVerificationUi(elements, message) {
+
+    if (elements.status) {
+        elements.status.innerHTML = message || "Verified";
+    }
+
+    if (elements.button) {
+        elements.button.disabled = true;
+        elements.button.innerHTML = "Verified";
+    }
+}
+
+function resetVerificationUi(prefix, type) {
+
+    const elements =
+        getVerificationElements(prefix, type);
+
+    if (elements.input) {
+        elements.input.value = "";
+    }
+
+    if (elements.status) {
+        elements.status.innerHTML = "";
+    }
+
+    if (elements.button) {
+        elements.button.disabled = false;
+        elements.button.innerHTML =
+            type === "uan"
+                ? "Verify UAN"
+                : type === "pan"
+                    ? "Verify PAN"
+                    : "Verify Aadhaar";
+    }
+}
+
+function clearIdentificationFields(prefix) {
+
+    ["pan", "aadhaar", "uan"].forEach(type =>
+        resetVerificationUi(prefix, type)
+    );
+}
+
+function clearInactiveCandidateVerification(selectedType) {
+
+    if (!loadedCandidateType ||
+        loadedCandidateType === selectedType) {
+        return;
+    }
+
+    const prefix =
+        selectedType === "experienced"
+            ? "e"
+            : "f";
+
+    clearIdentificationFields(prefix);
+}
+
+function handleDigiLockerRedirect(data) {
+
+    if (data.redirectUrl) {
+        window.location.href = data.redirectUrl;
+        return true;
+    }
+
+    return false;
+}
+
+async function verifyAadhaar(prefix = activeTab === "fresher" ? "f" : "e") {
+
+    return startVerification("aadhaar", prefix);
+}
+
+async function verifyPan(prefix = activeTab === "fresher" ? "f" : "e") {
+
+    return startVerification("pan", prefix);
+}
+
+async function verifyUan(prefix = "e") {
+
+    return startVerification("uan", prefix);
+}
+
+async function startVerification(type, prefix = activeTab === "fresher" ? "f" : "e") {
+
+    const elements = getVerificationElements(prefix, type);
+    const number = elements.input?.value.trim() || "";
+
+    if (type === "aadhaar" && !validateAadhaar(number)) {
+        showToast("Enter valid 12-digit Aadhaar", "error");
+        return;
+    }
+
+    if (type === "pan" && !validatePAN(number.toUpperCase())) {
+        showToast("Enter valid PAN", "error");
+        return;
+    }
+
+    if (type === "uan" && !validateUAN(number)) {
+        showToast("Enter valid 12-digit UAN", "error");
+        return;
+    }
+
+    const normalizedNumber =
+        type === "pan"
+            ? number.toUpperCase()
+            : number;
+
+    if (elements.input) {
+        elements.input.value = normalizedNumber;
+    }
+
+    try {
+        const data =
+            await postVerification(
+                `verify-${type}`,
+                normalizedNumber);
+
+        if (handleDigiLockerRedirect(data)) {
+            return;
+        }
+
+        completeVerificationUi(elements, "Verified");
+
+        if (type === "uan") {
+            showEmploymentHistoryModal(data);
+        }
+
+        showToast(data.message || `${type.toUpperCase()} verified`, "success");
+    } catch (error) {
+        showToast(error.message, "error");
+    }
+}
+
+async function loadVerificationStatus() {
+
+    // Syncs saved verification status back into the visible profile form.
+    const token = authStorage.getItem("token");
+
+    if (!token) {
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            `${API_BASE_URL}/Verification/candidate-verification`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+        if (!response.ok) {
+            return;
+        }
+
+        const data = await response.json();
+
+        loadedCandidateType =
+            data.candidateType || null;
+
+        clearIdentificationFields("f");
+        clearIdentificationFields("e");
+
+        const prefix =
+            data.candidateType === "experienced"
+                ? "e"
+                : "f";
+
+            const aadhaar = getVerificationElements(prefix, "aadhaar");
+            const pan = getVerificationElements(prefix, "pan");
+            const uan = getVerificationElements(prefix, "uan");
+
+            if (aadhaar.input && data.aadhaarNumber) {
+                aadhaar.input.value = data.aadhaarNumber;
+            }
+
+            if (pan.input && data.panNumber) {
+                pan.input.value = data.panNumber;
+            }
+
+            if (uan.input && data.uanNumber) {
+                uan.input.value = data.uanNumber;
+            }
+
+            if (data.aadhaarVerified) {
+                completeVerificationUi(aadhaar, "Verified");
+            }
+
+            if (data.panVerified) {
+                completeVerificationUi(pan, "Verified");
+            }
+
+            if (data.uanVerified) {
+                completeVerificationUi(uan, "Verified");
+            }
+    } catch (error) {
+        console.error(error);
+    }
+}
