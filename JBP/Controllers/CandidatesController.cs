@@ -25,6 +25,19 @@ namespace JBP.Controllers
         {
             return Ok(_context.Candidates.ToList());
         }
+        [HttpGet("{id}")]
+        public IActionResult GetCandidateById(int id)
+        {
+            var candidate =
+                _context.Candidates.Find(id);
+
+            if (candidate == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(candidate);
+        }
 
         [HttpPost]
         public IActionResult AddCandidate(Candidate candidate)

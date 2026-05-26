@@ -24,7 +24,7 @@
                 <button class="nav-link" data-page="employer" onclick="showPage('employer')">Employer</button>-->
                 <button id="registerBtn" class="nav-link btn-Register" data-page="register" onclick="showPage('register')">Register</button>
                 <button id="loginBtn" class="nav-link btn-login" data-page="login" onclick="showPage('login')">Login</button>
-                <div id="user-area" class="user-area" style="display:none;"> <span id="welcome-user"></span> <button id="logout-btn" class="btn-secondary" onclick="logout()"> Logout </button> </div>
+                <div id="user-area" class="user-area" style="display:none;"> <span id="welcome-user"></span> <button id="logout-btn" class="btn-secondary" > Logout </button> </div>
             </div>
 
             <!-- Mobile hamburger -->
@@ -105,13 +105,37 @@
                 <p>Whether you're starting fresh or leveling up — we'll find your perfect match.</p>
             </div>
 
+            <!-- Existing jobseekers land here after login when a candidate row already exists. -->
+            <div id="jobseeker-submitted-profile" class="submitted-profile hidden"></div>
+
+            <!-- New jobseekers choose a profile type before the matching form is displayed. -->
+            <div id="jobseeker-type-choice" class="profile-choice">
+                <button type="button"
+                        class="profile-choice-card"
+                        onclick="openJobseekerForm('fresher')">
+                    <span class="choice-icon">🎓</span>
+                    <span class="choice-title">Fresher</span>
+                    <span class="choice-copy">Start with education, skills, resume, PAN and Aadhaar verification.</span>
+                    <span class="choice-action">Create Fresher Profile</span>
+                </button>
+
+                <button type="button"
+                        class="profile-choice-card"
+                        onclick="openJobseekerForm('experienced')">
+                    <span class="choice-icon">💼</span>
+                    <span class="choice-title">Experienced</span>
+                    <span class="choice-copy">Add work history, salary details, PAN, Aadhaar and UAN verification.</span>
+                    <span class="choice-action">Create Experienced Profile</span>
+                </button>
+            </div>
+
             <!-- Tab switch -->
-            <div class="tab-switch">
+            <div class="tab-switch hidden" id="jobseeker-tab-switch">
                 <button class="tab-btn active" id="tab-fresher" onclick="switchTab('fresher')">🎓 Fresher</button>
                 <button class="tab-btn" id="tab-experienced" onclick="switchTab('experienced')">💼 Experienced</button>
             </div>
 
-            <div class="form-card">
+            <div class="form-card hidden" id="jobseeker-form-card">
 
                 <!-- ─── FRESHER FORM ─── -->
                 <div id="form-fresher">
@@ -150,31 +174,7 @@
 
                     </div>
 
-                    <div class="form-row">
-
-                        <div class="form-group">
-                            <label for="f-pan">
-                                PAN Number <span class="req">*</span>
-                            </label>
-
-                            <input type="text"
-                                   id="f-pan"
-                                   placeholder="ABCDE1234F"
-                                   maxlength="10" />
-                        </div>
-
-                        <div class="form-group">
-                            <label for="f-aadhaar">
-                                Aadhaar Number <span class="req">*</span>
-                            </label>
-
-                            <input type="text"
-                                   id="f-aadhaar"
-                                   placeholder="123412341234"
-                                   maxlength="12" />
-                        </div>
-
-                    </div>
+                    <div id="f-verification-fields"></div>
 
                     <div class="form-group">
                         <label for="f-address">Address <span class="req">*</span></label>
@@ -302,15 +302,12 @@
                             <input type="tel" id="e-phone" placeholder="9876543210" maxlength="10" />
                         </div>
                         <div class="form-group">
-                            <label for="e-uan">UAN <span class="req">*</span> <span class="hint">(12-digit)</span></label>
-                            <input type="text" id="e-uan" placeholder="123456789012" maxlength="12" />
-                        </div>
-                        <div class="form-group">
                             <label for="e-dob"> DOB <span class="req">*</span> </label>
 
                             <input type="date" id="e-dob" />
                         </div>
                     </div>
+                    <div id="e-verification-fields"></div>
                     <div class="form-group">
                         <label for="e-address">Address <span class="req">*</span></label>
                         <textarea id="e-address" placeholder="Street, City, State, PIN Code" rows="3"></textarea>
@@ -555,7 +552,7 @@
             </div>
 
         </div>
-        
+
     </div><!-- /page-employer -->
     <!-- ═══════════════════════════════════════
          PAGE: ADMIN
@@ -814,6 +811,41 @@
 
             <button class="back-btn"
                     onclick="closeCandidateProfile()">
+
+                ← Back
+
+            </button>
+
+        </div>
+
+    </div>
+    <!-- Verification Modal -->
+
+    <div id="verificationModal"
+         class="profile-modal"
+         style="display:none;">
+
+        <div class="profile-card">
+
+            <div class="profile-header">
+
+                <div class="profile-title">
+                    Verification Details
+                </div>
+
+                <button class="close-btn"
+                        onclick="closeVerificationModal()">
+
+                    X
+
+                </button>
+
+            </div>
+
+            <div id="verificationContent"></div>
+
+            <button class="back-btn"
+                    onclick="closeVerificationModal()">
 
                 ← Back
 
