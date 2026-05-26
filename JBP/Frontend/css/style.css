@@ -811,6 +811,39 @@ button:disabled {
     font-size: 14px;
     background: white;
 }
+.employment-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.employment-card,
+.employment-empty {
+    background: #f8fafc;
+    border: 1px solid #dbe4ef;
+    border-radius: 8px;
+    display: grid;
+    gap: 4px;
+    padding: 12px;
+}
+
+.employment-card strong {
+    color: #0f172a;
+}
+
+.employment-card span,
+.employment-empty {
+    color: #475569;
+    font-size: 13px;
+}
+.verify-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
 .verify-row {
     margin-bottom: 20px;
 }
@@ -823,7 +856,6 @@ button:disabled {
     border-radius: 8px;
     cursor: pointer;
     font-weight: 600;
-    margin-top: 10px;
     transition: 0.3s;
 }
 
@@ -834,7 +866,6 @@ button:disabled {
 .verify-status {
     color: green;
     font-weight: 700;
-    margin-left: 12px;
 }
 .verify-btn:disabled {
     background: #16a34a;
