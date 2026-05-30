@@ -1,0 +1,42 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = "vistajobs"
+        IMAGE_TAG  = "v${BUILD_NUMBER}"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                git branch: 'dev',
+                    url: 'https://github.com/BlackAsh07/VistaJobs.git'
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                sh 'docker build -t ${IMAGE_NAME}:${IMAGE_TAG} -f JBP/Dockerfile .'
+            }
+        }
+
+        stage('SonarQube Scan') {
+            steps {
+                echo 'SonarQube scan will run here'
+            }
+        }
+
+        stage('Notify') {
+            steps {
+                echo 'Build successful - notify testing team'
+            }
+        }
+    }
+
+    post {
+        failure {
+            echo 'Build failed - check logs'
+        }
+    }
+}
