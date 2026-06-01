@@ -1,5 +1,4 @@
 name: VistaJobs CI/CD
-name: VistaJobs CI/CD
 
 on:
   push:
@@ -59,30 +58,3 @@ jobs:
         .\.sonar\scanner\dotnet-sonarscanner begin /k:"VistaJobs" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}"
         dotnet build JBP/JBP.csproj -c Release
         .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
-on:
-  push:
-    branches: [ dev ]
-  pull_request:
-    branches: [ dev ]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: '8.0.x'
-
-    - name: Restore dependencies
-      run: dotnet restore JBP/JBP.csproj
-
-    - name: Build
-      run: dotnet build JBP/JBP.csproj --no-restore -c Release
-
-    - name: Docker Build
-      run: docker build -t vistajobs:${{ github.run_number }} -f JBP/Dockerfile .
