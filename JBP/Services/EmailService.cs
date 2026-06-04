@@ -3,6 +3,8 @@ using System.Net.Mail;
 
 namespace JBP.Services
 {
+    // Central SMTP wrapper for notification emails.
+    // Settings come from appsettings: EmailSettings section.
     public class EmailService
     {
         private readonly IConfiguration _configuration;
@@ -18,6 +20,7 @@ namespace JBP.Services
             string subject,
             string body)
         {
+            // Keep SMTP details in configuration so DevOps can change them without code edits.
             var settings =
                 _configuration.GetSection(
                     "EmailSettings");

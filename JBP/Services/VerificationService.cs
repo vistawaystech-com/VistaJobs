@@ -147,6 +147,11 @@ namespace JBP.Services
                 await _epfoProvider.VerifyUanAsync(
                     number,
                     cancellationToken);
+            Console.WriteLine(
+    "Employment Count = " +
+    result.EmploymentHistory.Count);
+            Console.WriteLine("Verified = " + result.Verified);
+            Console.WriteLine("Message = " + result.Message);
 
             SaveLog(
                 candidate,
@@ -244,6 +249,7 @@ namespace JBP.Services
             string uan,
             List<EmploymentHistory> history)
         {
+            Console.WriteLine("History Count = " + history.Count);
             var existing =
                 _context.EmploymentHistories
                     .Where(item => item.CandidateId == candidate.Id);
@@ -253,6 +259,7 @@ namespace JBP.Services
             for (var index = 0; index < history.Count; index++)
             {
                 var item = history[index];
+                Console.WriteLine("Company = " + item.Company);
                 item.Id = 0;
                 item.CandidateId = candidate.Id;
                 item.Candidate = null;

@@ -14,6 +14,8 @@ using System.Text;
 
 namespace Jobsy.API.Controllers
 {
+    // Handles account creation and login.
+    // Successful login returns a JWT plus display details used by the frontend navbar.
     [ApiController]
 
     [Route("api/[controller]")]
@@ -32,11 +34,10 @@ namespace Jobsy.API.Controllers
             _configuration = configuration;
         }
 
-        // REGISTER
+        // Registers a new user after blocking duplicate email addresses.
         [HttpPost("register")]
         public IActionResult Register(RegisterDto dto)
         {
-            // Check email already exists
             var exists = _context.Users
                 .Any(u => u.Email == dto.Email);
 
@@ -46,7 +47,7 @@ namespace Jobsy.API.Controllers
                     "Email already registered");
             }
 
-            // Create user
+            // Store only the BCrypt hash. The original password is never saved.
             var user = new User
             {
                 FullName = dto.FullName,
@@ -66,7 +67,7 @@ namespace Jobsy.API.Controllers
                 "User registered successfully");
         }
 
-        // LOGIN
+        // Validates credentials and issues a short-lived JWT for API authorization.
         [HttpPost("login")]
         public IActionResult Login(LoginDto dto)
         {
@@ -90,7 +91,7 @@ namespace Jobsy.API.Controllers
                     "Invalid email or password");
             }
 
-            // JWT Claims
+            // Claims are the source for role checks and current-user profile lookup.
             var claims = new[]
             {
                 new Claim(
@@ -106,7 +107,7 @@ namespace Jobsy.API.Controllers
                     user.Role)
             };
 
-            // Secret Key
+            // Token signing key must match Jwt:Key in appsettings.
             var key = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(
                     _configuration["Jwt:Key"]!));
@@ -116,7 +117,7 @@ namespace Jobsy.API.Controllers
                     key,
                     SecurityAlgorithms.HmacSha256);
 
-            // Create Token
+            // Token lifetime is intentionally short for this local project.
             var token = new JwtSecurityToken(
                 issuer:
                     _configuration["Jwt:Issuer"],
@@ -142,7 +143,9 @@ namespace Jobsy.API.Controllers
 
                 name = user.FullName,
 
-                role = user.Role
+                role = user.Role,
+
+                email = user.Email
             });
         }
     }

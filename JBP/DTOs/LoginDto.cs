@@ -1,5 +1,6 @@
 ﻿namespace JBP.DTOs
 {
+    // Request body for /api/Auth/login.
     public class LoginDto
     {
         public string Email { get; set; } = string.Empty;
