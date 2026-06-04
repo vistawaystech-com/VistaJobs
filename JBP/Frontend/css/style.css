@@ -101,6 +101,9 @@ input, select, textarea { font-family:'DM Sans',sans-serif; }
   margin:0 auto;
 }
 .logo {
+  align-items: center;
+  display: inline-flex;
+  gap: .65rem;
   font-family: 'Sora', sans-serif;
   font-size: 1.7rem;
   font-weight: 800;
@@ -108,7 +111,12 @@ input, select, textarea { font-family:'DM Sans',sans-serif; }
   letter-spacing: -1px;
   user-select: none;
 }
-.logo span { color: var(--gold); }
+.brand-logo {
+  flex: 0 0 auto;
+  height: 38px;
+  width: 38px;
+}
+.brand-text span { color: var(--gold); }
 
 .nav-links {
   display: flex;

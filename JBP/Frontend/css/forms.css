@@ -556,16 +556,25 @@ select:invalid, select option[value=""] { color:var(--gray-400); }
         }
 
         .login-logo {
+            align-items: center;
+            display: inline-flex;
+            gap: .75rem;
             font-family: 'Sora',sans-serif;
             font-size: 2rem;
             font-weight: 800;
             color: var(--navy);
-            text-align: center;
+            justify-content: center;
             margin-bottom: 1.5rem;
             letter-spacing: -1px;
+            width: 100%;
         }
 
-            .login-logo span {
+            .login-logo .brand-logo {
+                height: 48px;
+                width: 48px;
+            }
+
+            .login-logo .brand-text span {
                 color: var(--gold);
             }
 

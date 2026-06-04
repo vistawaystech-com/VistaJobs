@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace JBP.Migrations
 {
     /// <inheritdoc />
-    public partial class Intialdb : Migration
+    public partial class intiadb : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -21,8 +21,13 @@ namespace JBP.Migrations
                     Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Phone = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Dob = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    AadhaarVerified = table.Column<bool>(type: "bit", nullable: false),
+                    PanVerified = table.Column<bool>(type: "bit", nullable: false),
+                    UanVerified = table.Column<bool>(type: "bit", nullable: false),
                     PanNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     AadhaarNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UanNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    EmploymentHistory = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Experience = table.Column<int>(type: "int", nullable: false),
                     Skills = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Location = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -87,13 +92,72 @@ namespace JBP.Migrations
                 {
                     table.PrimaryKey("PK_Users", x => x.Id);
                 });
+
+            migrationBuilder.CreateTable(
+                name: "EmploymentHistories",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CandidateId = table.Column<int>(type: "int", nullable: false),
+                    Uan = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Company = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Doj = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Doe = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    DisplayOrder = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EmploymentHistories", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_EmploymentHistories_Candidates_CandidateId",
+                        column: x => x.CandidateId,
+                        principalTable: "Candidates",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "VerificationLogs",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CandidateId = table.Column<int>(type: "int", nullable: true),
+                    DocumentType = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Provider = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    RawResponse = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_VerificationLogs", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_VerificationLogs_Candidates_CandidateId",
+                        column: x => x.CandidateId,
+                        principalTable: "Candidates",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EmploymentHistories_CandidateId",
+                table: "EmploymentHistories",
+                column: "CandidateId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_VerificationLogs_CandidateId",
+                table: "VerificationLogs",
+                column: "CandidateId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Candidates");
+                name: "EmploymentHistories");
 
             migrationBuilder.DropTable(
                 name: "JobApplications");
@@ -103,6 +167,12 @@ namespace JBP.Migrations
 
             migrationBuilder.DropTable(
                 name: "Users");
+
+            migrationBuilder.DropTable(
+                name: "VerificationLogs");
+
+            migrationBuilder.DropTable(
+                name: "Candidates");
         }
     }
 }
