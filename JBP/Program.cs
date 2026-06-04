@@ -22,6 +22,7 @@ builder.Services.AddScoped<IDigiLockerGateway, DigiLockerGateway>();
 builder.Services.Configure<EpfoOptions>(
     builder.Configuration.GetSection("EPFO"));
 builder.Services.AddScoped<VerificationService>();
+builder.Services.AddHttpClient();
 builder.Services.AddHttpClient<IEpfoVerificationProvider, SurepassEpfoProvider>();
 
 // JWT is the main login/session mechanism.

@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace JBP.Controllers
 {
+    // Admin-only reporting APIs for dashboard totals and raw lists.
+    // These endpoints are useful for tester verification after user/job/application flows.
     [Authorize(Roles = "admin")]
 
     [ApiController]
@@ -19,7 +21,7 @@ namespace JBP.Controllers
             _context = context;
         }
 
-        // DASHBOARD
+        // Summary counts shown in admin dashboard cards.
         [HttpGet("dashboard")]
         public IActionResult Dashboard()
         {
@@ -41,7 +43,7 @@ namespace JBP.Controllers
             return Ok(dashboard);
         }
 
-        // ALL USERS
+        // Raw user list for admin validation.
         [HttpGet("users")]
         public IActionResult Users()
         {
@@ -49,7 +51,7 @@ namespace JBP.Controllers
                 _context.Users.ToList());
         }
 
-        // ALL JOBS
+        // Raw job list for admin validation.
         [HttpGet("jobs")]
         public IActionResult Jobs()
         {
@@ -57,7 +59,7 @@ namespace JBP.Controllers
                 _context.Jobs.ToList());
         }
 
-        // ALL APPLICATIONS
+        // Raw application list for admin validation.
         [HttpGet("applications")]
         public IActionResult Applications()
         {

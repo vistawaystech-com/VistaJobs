@@ -669,11 +669,54 @@ button:disabled {
 .profile-card {
     width: 500px;
     max-width: 90%;
+    max-height: min(86vh, 760px);
     background: white;
     border-radius: 16px;
     padding: 25px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     animation: popup 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#verificationContent {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+#verificationModal .profile-header,
+#verificationModal .back-btn {
+    flex-shrink: 0;
+}
+
+#verificationContent::-webkit-scrollbar {
+    width: 8px;
+}
+
+#verificationContent::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+}
+
+.employment-toggle-btn {
+    background: #0f766e;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    font-weight: 700;
+    padding: 10px 16px;
+}
+
+.employment-toggle-btn:hover {
+    background: #0d5f59;
+}
+
+.employment-history-panel {
+    margin-top: 12px;
 }
 
 @keyframes popup {
@@ -871,6 +914,63 @@ button:disabled {
     background: #16a34a;
     cursor: not-allowed;
     opacity: 0.9;
+}
+
+.identity-verify-panel {
+    background: linear-gradient(135deg, #f8fafc 0%, #eef6ff 100%);
+    border: 1px solid #dbeafe;
+    border-radius: 8px;
+    margin: 18px 0;
+    padding: 16px;
+}
+
+.identity-action-row {
+    background: #ffffff;
+    border: 1px dashed #bfdbfe;
+    border-radius: 8px;
+    justify-content: space-between;
+    padding: 10px;
+}
+
+.digilocker-btn {
+    align-items: center;
+    background: #0f766e;
+    display: inline-flex;
+    gap: 10px;
+    min-height: 42px;
+}
+
+.digilocker-btn:hover {
+    background: #0d5f59;
+}
+
+.verify-pulse {
+    background: #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.75);
+    display: inline-block;
+    height: 9px;
+    width: 9px;
+    animation: verifyPulse 1.6s infinite;
+}
+
+.digilocker-btn:disabled .verify-pulse {
+    animation: none;
+    box-shadow: none;
+}
+
+@keyframes verifyPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.75);
+    }
+
+    70% {
+        box-shadow: 0 0 0 9px rgba(255, 255, 255, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+    }
 }
 .verification-cards {
     display: flex;

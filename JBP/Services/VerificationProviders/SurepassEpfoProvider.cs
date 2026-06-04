@@ -1,3 +1,5 @@
+using System.IO;
+using System.Text;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using JBP.Models;
@@ -54,14 +56,31 @@ namespace JBP.Services.VerificationProviders
             _httpClient.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", _options.ApiKey);
 
-            var path = (_options.UanPathTemplate ?? "/uan/{uan}")
-                .Replace("{uan}", Uri.EscapeDataString(uan));
+            var payload = new
+            {
+                id_number = uan
+            };
+
+            var content =
+                new StringContent(
+                    JsonSerializer.Serialize(payload),
+                    Encoding.UTF8,
+                    "application/json");
 
             using var response =
-                await _httpClient.GetAsync(path, cancellationToken);
+                await _httpClient.PostAsync(
+                    _options.UanPathTemplate,
+                    content,
+                    cancellationToken);
 
             var json =
                 await response.Content.ReadAsStringAsync(cancellationToken);
+            Directory.CreateDirectory(@"C:\temp");
+
+            File.WriteAllText(
+                @"C:\temp\surepass.json",
+                json);
+
 
             if (!response.IsSuccessStatusCode)
             {
@@ -75,16 +94,40 @@ namespace JBP.Services.VerificationProviders
                 };
             }
 
-            var result =
-                JsonSerializer.Deserialize<UanVerificationResult>(
-                    json,
-                    JsonOptions);
+            Console.WriteLine("SUREPASS JSON:");
+            Console.WriteLine(json);
 
-            return result ?? new UanVerificationResult
+            var surepassResponse =
+    JsonSerializer.Deserialize<SurepassResponse>(
+        json,
+        JsonOptions);
+            if (surepassResponse?.Data == null)
             {
-                Uan = uan,
-                Verified = false,
-                Message = "EPFO response was empty"
+                return new UanVerificationResult
+                {
+                    Uan = uan,
+                    Verified = false,
+                    Message = "No data returned"
+                };
+            }
+            Console.WriteLine(
+    "Surepass Employment Count = " +
+    (surepassResponse.Data.Employment_History?.Count ?? 0)
+);
+            return new UanVerificationResult
+            {
+                Uan = surepassResponse.Data.Uan ?? uan,
+                Verified = surepassResponse.Success,
+                EmploymentHistory =
+   surepassResponse.Data.Employment_History?
+    .Select(x => new EmploymentHistory
+    {
+        Company = x.Establishment_Name ?? "",
+        Doj = x.Date_Of_Joining ?? "",
+        Doe = x.Date_Of_Exit ?? ""
+    })
+    .ToList()
+    ?? new List<EmploymentHistory>()
             };
         }
     }

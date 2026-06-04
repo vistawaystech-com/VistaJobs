@@ -1,5 +1,7 @@
 ﻿namespace JBP.Models
 {
+    // Candidate application for one job.
+    // Duplicate prevention is based on JobId + CandidateEmail in ApplicationsController.
     public class JobApplication
     {
         public int Id { get; set; }

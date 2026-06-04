@@ -121,6 +121,7 @@ namespace JBP.Controllers
                     number,
                     HttpContext.RequestAborted);
 
+
             if (!result.Verified)
             {
                 return BadRequest(new
@@ -144,6 +145,29 @@ namespace JBP.Controllers
                 employmentHistory = result.EmploymentHistory
             });
         }
+        // [HttpPost("verify-uan")]
+        // public async Task<IActionResult> VerifyUan(
+        //[FromBody] VerificationRequest model)
+        // {
+        //     try
+        //     {
+        //         var candidate = GetCurrentCandidate();
+
+        //         var number = model.Number ?? string.Empty;
+
+        //         var result =
+        //             await _verificationService.VerifyUanAsync(
+        //                 candidate,
+        //                 number,
+        //                 HttpContext.RequestAborted);
+
+        //         return Ok(result);
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return StatusCode(500, ex.ToString());
+        //     }
+        // }
         [HttpGet("candidate-verification")]
         public IActionResult GetVerificationDetails()
         {
@@ -154,6 +178,20 @@ namespace JBP.Controllers
             {
                 return NotFound();
             }
+
+            var employmentHistory =
+                !string.IsNullOrWhiteSpace(candidate.EmploymentHistory)
+                    ? (object)candidate.EmploymentHistory
+                    : _context.EmploymentHistories
+                        .Where(item => item.CandidateId == candidate.Id)
+                        .OrderBy(item => item.DisplayOrder)
+                        .Select(item => new
+                        {
+                            company = item.Company,
+                            doj = item.Doj,
+                            doe = item.Doe
+                        })
+                        .ToList();
 
             return Ok(new
             {
@@ -175,8 +213,7 @@ namespace JBP.Controllers
                 uanNumber =
                     candidate.UanNumber,
 
-                employmentHistory =
-                    candidate.EmploymentHistory,
+                employmentHistory,
 
                 candidateType =
                     candidate.CandidateType
