@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    name: Build
+    name: Build & Test
     runs-on: ubuntu-latest
 
     steps:
@@ -26,5 +26,34 @@ jobs:
     - name: Build
       run: dotnet build JBP/JBP.csproj --no-restore -c Release
 
-    - name: Docker Build
+  docker:
+    name: Docker Build & Push
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Build Docker image
       run: docker build -t vistajobs:${{ github.run_number }} -f JBP/Dockerfile .
+
+    - name: Tag as latest
+      run: docker tag vistajobs:${{ github.run_number }} vistajobs:latest
+
+    - name: Save image info
+      run: echo "Built vistajobs:${{ github.run_number }}"
+
+  notify:
+    name: Notify Team
+    runs-on: ubuntu-latest
+    needs: docker
+
+    steps:
+    - name: Notify testing team
+      run: |
+        echo "✅ Build #${{ github.run_number }} successful"
+        echo "Branch: ${{ github.ref_name }}"
+        echo "Commit: ${{ github.sha }}"
+        echo "Author: ${{ github.actor }}"
+        echo "Ready for testing!"
