@@ -10,6 +10,8 @@
 
         public string Password { get; set; } = string.Empty;
 
+        public string Otp { get; set; } = string.Empty;
+
         // Expected values: jobseeker, employer, admin.
         public string Role { get; set; } = string.Empty;
     }

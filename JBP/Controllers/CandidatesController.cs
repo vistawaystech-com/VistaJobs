@@ -68,6 +68,47 @@ namespace JBP.Controllers
                 _context.Candidates
                     .FirstOrDefault(c => c.Email == email);
 
+            candidate.AadhaarNumber =
+                string.IsNullOrWhiteSpace(candidate.AadhaarNumber)
+                    ? null
+                    : candidate.AadhaarNumber.Trim().ToUpperInvariant();
+
+            candidate.PanNumber =
+                string.IsNullOrWhiteSpace(candidate.PanNumber)
+                    ? null
+                    : candidate.PanNumber.Trim().ToUpperInvariant();
+
+            if (!candidate.AadhaarVerified ||
+                string.IsNullOrWhiteSpace(candidate.AadhaarNumber))
+            {
+                return BadRequest(new
+                {
+                    message = "Please verify Aadhaar with DigiLocker before saving."
+                });
+            }
+
+            if (!candidate.PanVerified ||
+                string.IsNullOrWhiteSpace(candidate.PanNumber))
+            {
+                return BadRequest(new
+                {
+                    message = "Please verify PAN with DigiLocker before saving."
+                });
+            }
+
+            var aadhaarAlreadyRegistered =
+                _context.Candidates.Any(c =>
+                    c.AadhaarNumber == candidate.AadhaarNumber &&
+                    c.Email != email);
+
+            if (aadhaarAlreadyRegistered)
+            {
+                return BadRequest(new
+                {
+                    message = "This Aadhaar is already registered."
+                });
+            }
+
             if (existing == null)
             {
                 // First profile submission for this jobseeker.
