@@ -14,5 +14,11 @@
 
         // Expected values: admin, employer, jobseeker.
         public string Role { get; set; } = string.Empty;
+
+        public string AuthProvider { get; set; } = "Email";
+
+        public string? GoogleSubject { get; set; }
+
+        public bool EmailVerified { get; set; }
     }
 }

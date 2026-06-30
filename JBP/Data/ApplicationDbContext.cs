@@ -21,6 +21,8 @@ namespace JBP.Data
         // Login accounts and roles.
         public DbSet<User> Users { get; set; }
 
+        public DbSet<EmailOtpVerification> EmailOtpVerifications { get; set; }
+
         // Candidate applications submitted against jobs.
         public DbSet<JobApplication> JobApplications { get; set; }
 

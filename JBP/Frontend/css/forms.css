@@ -653,6 +653,55 @@ select:invalid, select option[value=""] { color:var(--gray-400); }
                     text-decoration: underline;
                 }
         /* ── PASSWORD TOGGLE ── */
+        .otp-block {
+            margin-top: 1rem;
+        }
+
+        .link-action {
+            background: none;
+            border: 0;
+            color: var(--blue-mid);
+            cursor: pointer;
+            display: inline-flex;
+            font-size: .84rem;
+            font-weight: 700;
+            margin-top: .55rem;
+            padding: 0;
+        }
+
+            .link-action:hover {
+                text-decoration: underline;
+            }
+
+        .auth-divider {
+            align-items: center;
+            color: var(--gray-400);
+            display: flex;
+            font-size: .78rem;
+            font-weight: 700;
+            gap: .75rem;
+            margin: 1.25rem 0;
+            text-transform: uppercase;
+        }
+
+            .auth-divider::before,
+            .auth-divider::after {
+                background: var(--gray-200);
+                content: "";
+                flex: 1;
+                height: 1px;
+            }
+
+        .google-auth-slot {
+            display: flex;
+            justify-content: center;
+            min-height: 44px;
+        }
+
+        .google-role-group {
+            margin-bottom: 1rem;
+        }
+
         .input-group {
             position: relative;
         }

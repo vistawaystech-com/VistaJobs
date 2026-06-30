@@ -5,6 +5,10 @@ const API_BASE_URL = "https://localhost:7250/api";
 // Login state is kept only for this browser session.
 // This prevents stale user details from appearing after closing/reopening the browser.
 const authStorage = sessionStorage;
+const GOOGLE_CLIENT_ID = "280183771546-5q3kn4tsh1pt511ea9928pd01nq5ppgp.apps.googleusercontent.com";
+let registerOtpSent = false;
+let loginOtpSent = false;
+let googleAuthInitialized = false;
 
 function clearSavedLogin() {
 
@@ -59,6 +63,7 @@ async function handleRegister() {
         const email = document.getElementById('register-email')?.value.trim();
         const password = document.getElementById('register-pass')?.value.trim();
         const role = document.getElementById('register-role')?.value;
+        const otp = document.getElementById('register-otp')?.value.trim();
 
         if (!name || !email || !password || !role) {
             showToast('Please fill all fields', 'error');
@@ -70,10 +75,21 @@ async function handleRegister() {
             return;
         }
 
+        if (!registerOtpSent) {
+            await requestRegisterOtp();
+            return;
+        }
+
+        if (!otp) {
+            showToast('Please enter the OTP sent to your email', 'error');
+            return;
+        }
+
         const payload = {
             FullName: name,
             Email: email,
             Password: password,
+            Otp: otp,
             Role: role
         };
 
@@ -94,6 +110,10 @@ async function handleRegister() {
         const re = document.getElementById('register-email'); if (re) re.value = '';
         const rp = document.getElementById('register-pass'); if (rp) rp.value = '';
         const rr = document.getElementById('register-role'); if (rr) rr.value = '';
+        const ro = document.getElementById('register-otp'); if (ro) ro.value = '';
+        const otpBlock = document.getElementById('register-otp-block'); if (otpBlock) otpBlock.style.display = 'none';
+        const submit = document.getElementById('register-submit-btn'); if (submit) submit.textContent = 'Send OTP';
+        registerOtpSent = false;
 
         showToast('Account created successfully', 'success');
         //navigate to login page after registration instead of auto-login, to avoid confusion and also because user may want to login later. This also prevents the need to persist entered credentials in the form which can be a security risk.
@@ -109,6 +129,34 @@ async function handleRegister() {
         console.error(error);
         showToast('Registration failed', 'error');
     }
+}
+
+async function requestRegisterOtp(isResend = false) {
+    const email = document.getElementById('register-email')?.value.trim();
+
+    if (!email || !validateEmail(email)) {
+        showToast('Enter a valid email before requesting OTP', 'error');
+        return;
+    }
+
+    const resp = await fetch(`${API_BASE_URL}/Auth/request-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, purpose: 'register' })
+    });
+
+    if (!resp.ok) {
+        const t = await resp.text();
+        showToast(t || 'Could not send OTP', 'error');
+        return;
+    }
+
+    registerOtpSent = true;
+    const otpBlock = document.getElementById('register-otp-block');
+    if (otpBlock) otpBlock.style.display = 'block';
+    const submit = document.getElementById('register-submit-btn');
+    if (submit) submit.textContent = 'Verify OTP & Create Account';
+    showToast(isResend ? 'OTP resent to your email' : 'OTP sent to your email', 'success');
 }
 
 /* TOAST */
@@ -880,12 +928,12 @@ function submitJobseeker() {
             .getElementById(getVerificationElementId(p, "pan", "input"))
             ?.value || "";
 
-    if (!validateAadhaar(aadhaarNumber)) {
+    if (!validateVerifiedAadhaar(aadhaarNumber)) {
         showToast("Invalid Aadhaar", "error");
         return;
     }
 
-    if (!validatePAN(panNumber.toUpperCase())) {
+    if (!validateVerifiedPan(panNumber)) {
         showToast("Invalid PAN", "error");
         return;
     }
@@ -1321,121 +1369,212 @@ function closeCandidateProfile() {
 
 /* LOGIN */
 async function handleLogin() {
-
     try {
-
-        const email =
-            document.getElementById('login-email')?.value.trim();
-
-        const password =
-            document.getElementById('login-pass')?.value.trim();
+        const email = document.getElementById('login-email')?.value.trim();
+        const password = document.getElementById('login-pass')?.value.trim();
+        const otp = document.getElementById('login-otp')?.value.trim();
 
         if (!email || !password) {
-
-            showToast(
-                "Please enter email and password",
-                "error"
-            );
-
+            showToast("Please enter email and password", "error");
             return;
         }
 
-        const response = await fetch(
-
-            `${API_BASE_URL}/Auth/login`,
-
-            {
+        if (!loginOtpSent) {
+            const response = await fetch(`${API_BASE_URL}/Auth/login`, {
                 method: "POST",
-
                 headers: {
                     "Content-Type": "application/json"
                 },
-
                 body: JSON.stringify({
                     email,
                     password
                 })
+            });
+
+            if (!response.ok) {
+                throw new Error("Invalid login");
             }
-        );
+
+            await requestLoginOtp();
+            return;
+        }
+
+        if (!otp) {
+            showToast("Please enter the OTP sent to your email", "error");
+            return;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/Auth/verify-login-otp`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                email,
+                password,
+                otp
+            })
+        });
 
         if (!response.ok) {
-
-            throw new Error("Invalid login");
+            const message = await response.text();
+            throw new Error(message || "Invalid OTP");
         }
 
         const data = await response.json();
-
-        // Store JWT and display details for navbar, role routing, and API calls.
-        authStorage.setItem(
-            "token",
-            data.token
-        );
-
-        authStorage.setItem(
-            "role",
-            data.role
-        );
-
-        authStorage.setItem(
-            "name",
-            data.name
-        );
-        authStorage.setItem(
-            "email",
-            data.email || getLoggedInEmail()
-        );
-        showToast(
-            "Login successful",
-            "success"
-        );
-        updateNavbar();
-
-        // Clear login inputs so credentials are not left in the form
-        const le = document.getElementById('login-email'); if (le) le.value = '';
-        const lp = document.getElementById('login-pass'); if (lp) lp.value = '';
-
-        //Hide login/register pages and show dashboard based on role
-        document.getElementById("loginBtn").style.display = "none";
-        document.getElementById("registerBtn").style.display = "none";
-
-        //show Logout Area
-        document.getElementById("user-area").style.display = "flex";
-
-        // Redirect based on role
-        if (data.role === "admin") {
-
-    showPage("admin");
-
-    loadAdminDashboard();
-
-} else if (data.role === "employer") {
-
-    showPage("employer");
-
-    loadEmployerDashboard();
-
-} else {
-
-    showPage("jobseeker");
-
-    // Show chooser first so the page is not blank while profile lookup runs.
-    showJobseekerTypeChooser();
-
-    loadCandidateProfile();
-
-    // loadAppliedJobs();
-}
-
+        completeLogin(data);
     } catch (error) {
-
         console.error(error);
-
-        showToast(
-            "Invalid email or password",
-            "error"
-        );
+        showToast(error.message || "Invalid email or password", "error");
     }
 }
+
+async function requestLoginOtp(isResend = false) {
+    const email = document.getElementById('login-email')?.value.trim();
+
+    if (!email || !validateEmail(email)) {
+        showToast('Enter a valid email before requesting OTP', 'error');
+        return;
+    }
+
+    const resp = await fetch(`${API_BASE_URL}/Auth/request-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, purpose: 'login' })
+    });
+
+    if (!resp.ok) {
+        const t = await resp.text();
+        showToast(t || 'Could not send OTP', 'error');
+        return;
+    }
+
+    loginOtpSent = true;
+    const otpBlock = document.getElementById('login-otp-block');
+    if (otpBlock) otpBlock.style.display = 'block';
+    const submit = document.getElementById('login-submit-btn');
+    if (submit) submit.textContent = 'Verify OTP & Login';
+    showToast(isResend ? 'OTP resent to your email' : 'OTP sent to your email', 'success');
+}
+
+function completeLogin(data) {
+    // Store JWT and display details for navbar, role routing, and API calls.
+    authStorage.setItem("token", data.token);
+    authStorage.setItem("role", data.role);
+    authStorage.setItem("name", data.name);
+    authStorage.setItem("email", data.email || getLoggedInEmail());
+
+    showToast("Login successful", "success");
+    updateNavbar();
+
+    const le = document.getElementById('login-email'); if (le) le.value = '';
+    const lp = document.getElementById('login-pass'); if (lp) lp.value = '';
+    const lo = document.getElementById('login-otp'); if (lo) lo.value = '';
+    const otpBlock = document.getElementById('login-otp-block'); if (otpBlock) otpBlock.style.display = 'none';
+    const submit = document.getElementById('login-submit-btn'); if (submit) submit.textContent = 'Send OTP';
+    loginOtpSent = false;
+
+    document.getElementById("loginBtn").style.display = "none";
+    document.getElementById("registerBtn").style.display = "none";
+    document.getElementById("user-area").style.display = "flex";
+
+    if (data.role === "admin") {
+        showPage("admin");
+        loadAdminDashboard();
+    } else if (data.role === "employer") {
+        showPage("employer");
+        loadEmployerDashboard();
+    } else {
+        showPage("jobseeker");
+        showJobseekerTypeChooser();
+        loadCandidateProfile();
+    }
+}
+
+function getActiveAuthPage() {
+    return document.getElementById('page-register')?.classList.contains('active')
+        ? 'register'
+        : 'login';
+}
+
+function getGoogleRole() {
+    const activePage = getActiveAuthPage();
+
+    return activePage === 'register'
+        ? document.getElementById('register-role')?.value
+        : document.getElementById('login-google-role')?.value;
+}
+
+async function handleGoogleCredential(response) {
+    try {
+        const role = getGoogleRole();
+
+        if (getActiveAuthPage() === 'register' && !role) {
+            showToast('Select a role before using Google sign in', 'error');
+            return;
+        }
+
+        const resp = await fetch(`${API_BASE_URL}/Auth/google`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                credential: response.credential,
+                role
+            })
+        });
+
+        if (!resp.ok) {
+            const t = await resp.text();
+            showToast(t || 'Google sign in failed', 'error');
+            return;
+        }
+
+        const data = await resp.json();
+        completeLogin(data);
+    } catch (error) {
+        console.error(error);
+        showToast('Google sign in failed', 'error');
+    }
+}
+
+function initGoogleAuthButtons() {
+    if (!window.google?.accounts?.id) {
+        return;
+    }
+
+    if (!googleAuthInitialized) {
+        google.accounts.id.initialize({
+            client_id: GOOGLE_CLIENT_ID,
+            callback: handleGoogleCredential
+        });
+
+        googleAuthInitialized = true;
+    }
+
+    ['google-register-btn', 'google-login-btn'].forEach(id => {
+        const target = document.getElementById(id);
+
+        if (!target || target.dataset.rendered === 'true') {
+            return;
+        }
+
+        google.accounts.id.renderButton(target, {
+            theme: 'outline',
+            size: 'large',
+            text: id === 'google-register-btn' ? 'signup_with' : 'signin_with',
+            width: 320
+        });
+
+        target.dataset.rendered = 'true';
+    });
+}
+
+window.addEventListener('load', () => {
+    const loginSubmit = document.getElementById('login-submit-btn');
+    if (loginSubmit) loginSubmit.textContent = 'Send OTP';
+    initGoogleAuthButtons();
+    setTimeout(initGoogleAuthButtons, 1000);
+});
 /* LOGOUT */
 document.getElementById("logout-btn").addEventListener("click",function logout() {
     clearSavedLogin();
@@ -2253,6 +2392,12 @@ document.addEventListener('DOMContentLoaded', () => {
     renderAllVerificationFields();
     wireVerificationButtons();
     clearLegacyPersistentLogin();
+    document.querySelector('#navMobile button[onclick="showPage(\'home\')"]')?.remove();
+
+    const requestedPage = window.location.hash.slice(1);
+    if (requestedPage === 'register' || requestedPage === 'login') {
+        showPage(requestedPage);
+    }
 
     updateNavbar();
     // loadHomepageJobs();
@@ -2490,6 +2635,454 @@ async function viewVerificationDetails(id) {
 </div>
     `;
 }
+
+function isMaskedAadhaar(value) {
+
+    return /^[Xx*]{2,8}\d{4}$/.test(String(value || "").replace(/\s/g, ""));
+}
+
+function validateVerifiedAadhaar(value) {
+
+    return validateAadhaar(value) ||
+        isMaskedAadhaar(value);
+}
+
+function isMaskedPan(value) {
+
+    return /^[Xx*]{2,5}[A-Z][0-9]{4}[A-Z]$/.test(
+        String(value || "").trim().toUpperCase());
+}
+
+function validateVerifiedPan(value) {
+
+    const normalized =
+        String(value || "").trim().toUpperCase();
+
+    return validatePAN(normalized) ||
+        isMaskedPan(normalized);
+}
+
+async function fetchDigiLockerVerifiedDetails(clientId) {
+
+    const response =
+        await fetch(
+            `${API_BASE_URL.replace("/api", "")}/api/Digilocker/verified-details/${encodeURIComponent(clientId)}`);
+
+    let data = null;
+
+    try {
+        data = await response.json();
+    } catch {
+        data = null;
+    }
+
+    if (!response.ok || !data?.success) {
+        throw new Error(data?.message || "Unable to read DigiLocker verified details");
+    }
+
+    return data;
+}
+
+function applyDigiLockerVerifiedDetails(prefix, details) {
+    console.log("DIGILOCKER DETAILS =", details);
+
+    const aadhaar =
+        getVerificationElements(prefix, "aadhaar");
+
+    const pan =
+        getVerificationElements(prefix, "pan");
+
+    let aadhaarApplied = false;
+    let panApplied = false;
+
+    if (aadhaar.input) {
+        aadhaar.input.value = "";
+    }
+
+    if (pan.input) {
+        pan.input.value = "";
+    }
+
+    if (details.aadhaarNumber && aadhaar.input) {
+        aadhaar.input.value =
+            String(details.aadhaarNumber).trim().toUpperCase();
+
+        aadhaarApplied = true;
+        setStoredVerification(prefix, "aadhaar", true);
+    } else {
+        setStoredVerification(prefix, "aadhaar", false);
+    }
+
+    if (details.panNumber && pan.input) {
+        pan.input.value =
+            String(details.panNumber).trim().toUpperCase();
+
+        panApplied = true;
+        setStoredVerification(prefix, "pan", true);
+    } else {
+        setStoredVerification(prefix, "pan", false);
+    }
+
+    if (details.fullName) {
+        setFieldValue(`${prefix}-name`, details.fullName);
+    }
+
+    if (details.dob) {
+        setFieldValue(`${prefix}-dob`, formatDateInput(details.dob));
+    }
+
+    if (details.address) {
+        setFieldValue(`${prefix}-address`, details.address);
+    }
+
+    [
+        `${prefix}-name`,
+        `${prefix}-dob`,
+        `${prefix}-address`
+    ].forEach(id => {
+        const field =
+            document.getElementById(id);
+
+        if (field) {
+            field.readOnly = true;
+        }
+    });
+
+    if (aadhaar.input) {
+        aadhaar.input.readOnly = true;
+    }
+
+    if (pan.input) {
+        pan.input.readOnly = true;
+    }
+
+    const identityBtn =
+        document.getElementById(
+            getVerificationElementId(
+                prefix,
+                "identity",
+                "button"
+            )
+        );
+
+    if (identityBtn) {
+        identityBtn.disabled = true;
+        identityBtn.innerText = "Verified";
+    }
+
+    return {
+        aadhaarApplied,
+        panApplied
+    };
+}
+
+async function handleVerificationCallback() {
+
+    const params =
+        new URLSearchParams(window.location.search);
+
+    const status =
+        params.get("status");
+
+    if (status !== "success") {
+        updateVerificationUI();
+        return;
+    }
+
+    const pendingVerification =
+        localStorage.getItem("pendingVerification") || "identity";
+
+    const prefix =
+        localStorage.getItem("pendingVerificationPrefix") ||
+        localStorage.getItem("verificationPrefix") ||
+        "f";
+
+    const clientId =
+        params.get("client_id");
+
+    localStorage.setItem("verificationPrefix", prefix);
+    localStorage.removeItem("aadhaarVerified");
+    localStorage.removeItem("panVerified");
+
+    if (typeof showPage === "function") {
+        showPage("jobseeker");
+    }
+
+    if (typeof openJobseekerForm === "function") {
+        openJobseekerForm(
+            prefix === "e"
+                ? "experienced"
+                : "fresher");
+    }
+
+    setTimeout(async () => {
+        restoreDraftForm(prefix);
+
+        try {
+            if (!clientId) {
+                throw new Error("DigiLocker client id missing");
+            }
+
+            const details =
+                await fetchDigiLockerVerifiedDetails(clientId);
+
+            const applied =
+                applyDigiLockerVerifiedDetails(prefix, details);
+
+            if (pendingVerification !== "identity") {
+                setStoredVerification(prefix, pendingVerification, true);
+            }
+
+            localStorage.removeItem("pendingVerification");
+            localStorage.removeItem("pendingVerificationPrefix");
+
+            updateVerificationUI(prefix);
+
+            if (applied.aadhaarApplied && applied.panApplied) {
+                showToast("DigiLocker verified details loaded", "success");
+            } else {
+                showToast("DigiLocker returned partial details", "error");
+            }
+        } catch (error) {
+            const aadhaar =
+                getVerificationElements(prefix, "aadhaar");
+
+            const pan =
+                getVerificationElements(prefix, "pan");
+
+            if (aadhaar.input) {
+                aadhaar.input.value = "";
+            }
+
+            if (pan.input) {
+                pan.input.value = "";
+            }
+
+            setStoredVerification(prefix, "aadhaar", false);
+            setStoredVerification(prefix, "pan", false);
+            updateVerificationUI(prefix);
+            showToast(error.message, "error");
+        }
+    }, 300);
+}
+
+function updateVerificationUI(prefix = localStorage.getItem("verificationPrefix") || (activeTab === "experienced" ? "e" : "f")) {
+
+    const aadhaarVerified =
+        isStoredVerification(prefix, "aadhaar") ||
+        localStorage.getItem("aadhaarVerified") === "true";
+
+    const panVerified =
+        isStoredVerification(prefix, "pan") ||
+        localStorage.getItem("panVerified") === "true";
+
+    if (aadhaarVerified && panVerified) {
+        completeVerificationUi(
+            {
+                status: document.getElementById(
+                    getVerificationElementId(prefix, "identity", "status")),
+                button: document.getElementById(
+                    getVerificationElementId(prefix, "identity", "button"))
+            },
+            "Aadhaar and PAN verified");
+    } else if (aadhaarVerified || panVerified) {
+        const status =
+            document.getElementById(
+                getVerificationElementId(prefix, "identity", "status"));
+
+        if (status) {
+            status.innerHTML =
+                aadhaarVerified
+                    ? "Aadhaar verified. PAN not returned."
+                    : "PAN verified. Aadhaar not returned.";
+        }
+    }
+}
+
+function submitJobseeker() {
+
+    const isFresher = activeTab === 'fresher';
+    const p = isFresher ? 'f' : 'e';
+
+    const name =
+        document.getElementById(`${p}-name`)?.value.trim() || "";
+
+    const email =
+        document.getElementById(`${p}-email`)?.value.trim() ||
+        getLoggedInEmail();
+
+    const phone =
+        document.getElementById(`${p}-phone`)?.value.trim() || "";
+
+    const uan =
+        isFresher
+            ? ""
+            : document
+                .getElementById(getVerificationElementId("e", "uan", "input"))
+                ?.value.trim() || "";
+
+    const salary =
+        document.getElementById(`${p}-salary`)?.value;
+
+    const skills =
+        Skills[isFresher ? 'fresher' : 'experienced'];
+
+    if (!name) {
+        showToast("Enter name", "error");
+        return;
+    }
+
+    if (!validateEmail(email)) {
+        showToast("Invalid email", "error");
+        return;
+    }
+
+    if (!validatePhone(phone)) {
+        showToast("Invalid phone", "error");
+        return;
+    }
+
+    if (!isFresher && !validateUAN(uan)) {
+        showToast("Invalid UAN", "error");
+        return;
+    }
+
+    const dob =
+        document.getElementById(`${p}-dob`)?.value || "";
+
+    const aadhaarNumber =
+        document
+            .getElementById(getVerificationElementId(p, "aadhaar", "input"))
+            ?.value || "";
+
+    const panNumber =
+        document
+            .getElementById(getVerificationElementId(p, "pan", "input"))
+            ?.value || "";
+
+    if (!validateVerifiedAadhaar(aadhaarNumber)) {
+        showToast("Invalid Aadhaar", "error");
+        return;
+    }
+
+    if (!validateVerifiedPan(panNumber)) {
+        showToast("Invalid PAN", "error");
+        return;
+    }
+
+    const aadhaarVerified =
+        isStoredVerification(p, "aadhaar") ||
+        localStorage.getItem("aadhaarVerified") === "true";
+
+    const panVerified =
+        isStoredVerification(p, "pan") ||
+        localStorage.getItem("panVerified") === "true";
+
+    if (!aadhaarVerified || !panVerified) {
+        showToast("Please verify Aadhaar and PAN with DigiLocker", "error");
+        return;
+    }
+
+    const uanVerified =
+        isFresher ||
+        isStoredVerification("e", "uan");
+
+    if (!uanVerified) {
+        showToast("Please verify UAN", "error");
+        return;
+    }
+
+    const experience =
+        isFresher
+            ? 0
+            : parseInt(document.getElementById("e-exp")?.value, 10) || 0;
+
+    const location =
+        document.getElementById(`${p}-pref-loc`)?.value.trim() || "Open";
+
+    const verifiedEmploymentHistory =
+        localStorage.getItem("verifiedEmploymentHistory");
+
+    const employmentHistory =
+        isFresher
+            ? ""
+            : verifiedEmploymentHistory ||
+            JSON.stringify([{
+                company: document.getElementById("e-company")?.value.trim() || "",
+                doj: "",
+                doe: ""
+            }]);
+
+    const newCandidate = {
+        fullName: name,
+        email: email,
+        phone: phone,
+        aadhaarVerified: true,
+        panVerified: true,
+        uanVerified: isFresher ? false : true,
+        uanNumber: isFresher ? null : uan,
+        dob: dob,
+        aadhaarNumber: aadhaarNumber,
+        panNumber: panNumber.toUpperCase(),
+        employmentHistory: employmentHistory,
+        experience: experience,
+        skills: skills.join(","),
+        location: location,
+        salary: salary,
+        candidateType: isFresher ? "fresher" : "experienced",
+    };
+
+    fetch(`${API_BASE_URL}/Candidates`, {
+        method: 'POST',
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + authStorage.getItem("token")
+        },
+        body: JSON.stringify(newCandidate)
+    })
+        .then(async response => {
+            if (!response.ok) {
+                const text = await response.text();
+                throw new Error(text || "API Failed");
+            }
+
+            return response.json();
+        })
+        .then(async data => {
+            const resume =
+                await uploadResume(data.id, { silentIfMissing: true });
+
+            if (resume?.path) {
+                data.resumePath = resume.path;
+            }
+
+            ["aadhaarVerified",
+                "panVerified",
+                "pendingVerification",
+                "pendingVerificationPrefix",
+                "verificationPrefix",
+                "fFormData",
+                "eFormData",
+                "fresherFormData",
+                "verifiedEmploymentHistory"
+            ].forEach(key => localStorage.removeItem(key));
+
+            ["f", "e"].forEach(prefix =>
+                ["aadhaar", "pan", "uan"].forEach(type =>
+                    localStorage.removeItem(getVerificationStorageKey(prefix, type))));
+
+            showModal(
+                "Success",
+                "Profile submitted successfully!"
+            );
+
+            renderSubmittedProfile(data);
+        })
+        .catch(error => {
+            console.error(error);
+            showToast(error.message || "API Error", "error");
+        });
+}
 function closeVerificationModal() {
 
     document.getElementById(
@@ -2667,19 +3260,21 @@ function renderVerificationFields(type) {
     const fields = [
         {
             type: "aadhaar",
-            label: "Aadhaar Number",
-            placeholder: "123412341234",
-            maxLength: 12,
+            label: "Aadhaar",
+            placeholder: "Not Verified",
+            maxLength: null,
             hint: "",
-            action: prefix === "f" ? "" : `verifyAadhaar('${prefix}')`
+            action: `verifyAadhaar('${prefix}')`,
+            readOnly: true
         },
         {
             type: "pan",
-            label: "PAN Number",
-            placeholder: "ABCDE1234F",
-            maxLength: 10,
+            label: "PAN",
+            placeholder: "Not Verified",
+            maxLength: null,
             hint: "",
-            action: prefix === "f" ? "" : `verifyPan('${prefix}')`
+            action: `verifyPan('${prefix}')`,
+            readOnly: true
         }
     ];
 
@@ -2704,7 +3299,8 @@ function renderVerificationFields(type) {
                     <input type="text"
                            id="${getVerificationElementId(prefix, field.type, "input")}"
                            placeholder="${field.placeholder}"
-                           maxlength="${field.maxLength}"
+                           ${field.maxLength ? `maxlength="${field.maxLength}"` : ""}
+                           ${field.readOnly ? "readonly" : ""}
                            autocomplete="off" />
                     <div class="verify-actions">
                         <button type="button"
@@ -2840,6 +3436,26 @@ function handleDigiLockerRedirect(data) {
 
     return false;
 }
+
+async function readApiJson(response, fallbackMessage) {
+    const text =
+        await response.text();
+
+    if (!text) {
+        return {};
+    }
+
+    try {
+        return JSON.parse(text);
+    } catch {
+        throw new Error(
+            response.ok
+                ? fallbackMessage
+                : `${fallbackMessage}: ${text.slice(0, 160)}`
+        );
+    }
+}
+
 function saveDraftForm() {
 
     const data = {
@@ -3001,10 +3617,14 @@ async function startDigiLockerVerification(type, prefix = activeTab === "fresher
                 });
 
         const result =
-            await response.json();
+            await readApiJson(
+                response,
+                "Unable to start DigiLocker");
 
         const redirectUrl =
             result?.data?.url ||
+            result?.data?.redirect_url ||
+            result?.data?.authorization_url ||
             result?.redirectUrl;
 
         if (!response.ok || !redirectUrl) {
@@ -3451,22 +4071,22 @@ function renderVerificationFields(type) {
             <div class="form-row">
                 <div class="form-group">
                     <label for="${getVerificationElementId(prefix, "aadhaar", "input")}">
-                        Aadhaar Number <span class="req">*</span>
+                        Aadhaar
                     </label>
                     <input type="text"
                            id="${getVerificationElementId(prefix, "aadhaar", "input")}"
-                           placeholder="123412341234"
-                           maxlength="12"
+                           placeholder="Not Verified"
+                           readonly
                            autocomplete="off" />
                 </div>
                 <div class="form-group">
                     <label for="${getVerificationElementId(prefix, "pan", "input")}">
-                        PAN Number <span class="req">*</span>
+                        PAN
                     </label>
                     <input type="text"
                            id="${getVerificationElementId(prefix, "pan", "input")}"
-                           placeholder="ABCDE1234F"
-                           maxlength="10"
+                           placeholder="Not Verified"
+                           readonly
                            autocomplete="off" />
                 </div>
             </div>
@@ -3546,25 +4166,6 @@ function wireVerificationButtons() {
 
 async function verifyIdentityWithDigiLocker(prefix = activeTab === "experienced" ? "e" : "f") {
 
-    const aadhaar = getVerificationElements(prefix, "aadhaar");
-    const pan = getVerificationElements(prefix, "pan");
-    const aadhaarNumber = aadhaar.input?.value.trim() || "";
-    const panNumber = pan.input?.value.trim().toUpperCase() || "";
-
-    if (!validateAadhaar(aadhaarNumber)) {
-        showToast("Enter valid 12-digit Aadhaar", "error");
-        return;
-    }
-
-    if (!validatePAN(panNumber)) {
-        showToast("Enter valid PAN", "error");
-        return;
-    }
-
-    if (pan.input) {
-        pan.input.value = panNumber;
-    }
-
     saveDraftForm(prefix);
 
     return startDigiLockerVerification("identity", prefix);
@@ -3601,10 +4202,14 @@ async function startDigiLockerVerification(type, prefix = activeTab === "experie
                 });
 
         const result =
-            await response.json();
+            await readApiJson(
+                response,
+                "Unable to start DigiLocker");
 
         const redirectUrl =
             result?.data?.url ||
+            result?.data?.redirect_url ||
+            result?.data?.authorization_url ||
             result?.redirectUrl;
 
         if (!response.ok || !redirectUrl) {
@@ -3871,12 +4476,12 @@ function submitJobseeker() {
             .getElementById(getVerificationElementId(p, "pan", "input"))
             ?.value || "";
 
-    if (!validateAadhaar(aadhaarNumber)) {
+    if (!validateVerifiedAadhaar(aadhaarNumber)) {
         showToast("Invalid Aadhaar", "error");
         return;
     }
 
-    if (!validatePAN(panNumber.toUpperCase())) {
+    if (!validateVerifiedPan(panNumber)) {
         showToast("Invalid PAN", "error");
         return;
     }

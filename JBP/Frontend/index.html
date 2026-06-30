@@ -3,26 +3,33 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="google-signin-client_id" content="280183771546-5q3kn4tsh1pt511ea9928pd01nq5ppgp.apps.googleusercontent.com"/>
   <meta name="description" content="VistaJobs– Elevate Your Career Path. Find jobs or hire talent."/>
   <title>VistaJobs – Elevate Your Career Path</title>
   <link rel="stylesheet" href="css/style.css"/>
   <link rel="stylesheet" href="css/forms.css"/>
 </head>
 <body>
+    <div class="site-intro" id="siteIntro" role="status" aria-label="Loading VistaJobs">
+        <div class="intro-orbit orbit-one"></div>
+        <div class="intro-orbit orbit-two"></div>
+        <img src="assets/vistajobs-logo.png" alt="" class="intro-logo" />
+        <p class="intro-welcome">Welcome to <strong>Vista<span>Jobs</span></strong></p>
+        <div class="intro-loader" aria-hidden="true"><i></i><i></i><i></i></div>
+    </div>
 
     <!-- ═══════════════════════════════════════
          NAVBAR
     ════════════════════════════════════════ -->
     <nav class="navbar">
         <div class="container">
-            <div class="logo">
+            <button class="logo" type="button" onclick="showPage('home')" aria-label="VistaJobs home">
                 <img src="assets/vistajobs-logo.png" alt="VistaJobs logo" class="brand-logo" />
                 <span class="brand-text">Vista<span>Jobs</span></span>
-            </div>
+            </button>
 
             <!-- Desktop nav -->
             <div class="nav-links">
-                <button class="nav-link active" data-page="home" onclick="showPage('home')">Home</button>
                 <!--<button class="nav-link" data-page="jobseeker" onclick="showPage('jobseeker')">Jobseeker</button>
                 <button class="nav-link" data-page="employer" onclick="showPage('employer')">Employer</button>-->
                 <button id="registerBtn" class="nav-link btn-Register" data-page="register" onclick="showPage('register')">Register</button>
@@ -96,6 +103,17 @@
             </div>
         </div>-->
 
+        <section class="home-links" aria-labelledby="home-links-title">
+            <div class="container">
+                <p class="section-eyebrow">Get to know VistaJobs</p>
+                <h2 id="home-links-title">Let’s build the next step of your career.</h2>
+                <p class="home-links-copy">Learn what we stand for or reach out to our team. These pages are ready for you to personalise with your own details.</p>
+                <div class="home-link-grid">
+                    <a class="home-link-card" href="about.html"><span class="home-link-icon">01</span><h3>About Us</h3><p>Our story, purpose, and the people behind VistaJobs.</p><span class="home-link-action">Explore our story <b>→</b></span></a>
+                    <a class="home-link-card" href="contact.html"><span class="home-link-icon">02</span><h3>Contact Us</h3><p>Questions, feedback, or partnership ideas — we’d love to hear them.</p><span class="home-link-action">Get in touch <b>→</b></span></a>
+                </div>
+            </div>
+        </section>
     </div><!-- /page-home -->
     <!-- ═══════════════════════════════════════
          PAGE: JOBSEEKER
@@ -685,8 +703,15 @@
                     <option value="employer">Employer</option>
                 </select>
                 <div style="margin-top:1.25rem;">
-                    <button class="btn-submit" onclick="handleRegister()">Create Account</button>
+                    <button id="register-submit-btn" class="btn-submit" onclick="handleRegister()">Send OTP</button>
                 </div>
+                <div id="register-otp-block" class="form-group otp-block" style="display:none;">
+                    <label for="register-otp">Email OTP <span class="req">*</span></label>
+                    <input type="text" id="register-otp" placeholder="Enter 6-digit OTP" inputmode="numeric" maxlength="6" value="" />
+                    <button class="link-action" type="button" onclick="requestRegisterOtp(true)">Resend OTP</button>
+                </div>
+                <div class="auth-divider"><span>or</span></div>
+                <div id="google-register-btn" class="google-auth-slot"></div>
                 <div class="login-footer" style="margin-top:2rem;">
                     Already have an account?
                     <a onclick="showPage('login')" style="font-weight:600;">Sign in</a>
@@ -728,11 +753,27 @@
                         <button class="toggle-pass" type="button" onclick="togglePassword('login-pass')" title="Toggle password">👁</button>
                     </div>
                 </div>
+                <div id="login-otp-block" class="form-group otp-block" style="display:none;">
+                    <label for="login-otp">Email OTP <span class="req">*</span></label>
+                    <input type="text" id="login-otp" placeholder="Enter 6-digit OTP" inputmode="numeric" maxlength="6" value="" />
+                    <button class="link-action" type="button" onclick="requestLoginOtp(true)">Resend OTP</button>
+                </div>
                 <span class="forgot-link">Forgot password?</span>
 
-                <button class="btn-submit" onclick="handleLogin()">
+                <button id="login-submit-btn" class="btn-submit" onclick="handleLogin()">
                     🔐 Login
                 </button>
+
+                <div class="auth-divider"><span>or</span></div>
+                <div class="form-group google-role-group">
+                    <label for="login-google-role">Role for new Google accounts</label>
+                    <select id="login-google-role" class="form-control">
+                        <option value="">Select Role</option>
+                        <option value="jobseeker">Job Seeker</option>
+                        <option value="employer">Employer</option>
+                    </select>
+                </div>
+                <div id="google-login-btn" class="google-auth-slot"></div>
 
                 <div class="login-footer">
                     Don't have an account?
@@ -757,6 +798,7 @@
     ════════════════════════════════════════ -->
     <footer class="footer">
         <p>© 2026 <span>VistaJobs</span>. All rights reserved. Built with ❤️ for job seekers & employers.</p>
+        <div class="footer-links"><a href="about.html">About Us</a><a href="contact.html">Contact Us</a></div>
     </footer>
 
     <!-- ═══════════════════════════════════════
@@ -776,6 +818,8 @@
         </div>
     </div>
 
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="js/site-loader.js"></script>
     <script src="js/app.js"></script>
     <div id="modal" class="modern-modal">
 
