@@ -21,6 +21,8 @@ namespace JBP.Data
         // Login accounts and roles.
         public DbSet<User> Users { get; set; }
 
+        public DbSet<EmployerProfile> EmployerProfiles { get; set; }
+
         public DbSet<EmailOtpVerification> EmailOtpVerifications { get; set; }
 
         // Candidate applications submitted against jobs.
@@ -47,6 +49,16 @@ namespace JBP.Data
                 .WithMany()
                 .HasForeignKey(log => log.CandidateId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<EmployerProfile>()
+                .HasIndex(profile => profile.OfficialEmail)
+                .IsUnique();
+
+            modelBuilder.Entity<EmployerProfile>()
+                .HasOne(profile => profile.User)
+                .WithOne()
+                .HasForeignKey<EmployerProfile>(profile => profile.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

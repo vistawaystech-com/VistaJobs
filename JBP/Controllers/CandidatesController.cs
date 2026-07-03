@@ -11,8 +11,7 @@ namespace JBP.Controllers
 {
     // Candidate profile APIs.
     // Jobseekers create/update one profile by email, employers read candidates for matching.
-    [AllowAnonymous]
-    //[Authorize(Roles = "jobseeker,employer")]
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class CandidatesController : ControllerBase
@@ -23,13 +22,16 @@ namespace JBP.Controllers
         {
             _context = context;
         }
-        [AllowAnonymous]
+        [Authorize(Roles = "employer,admin")]
         [HttpGet]
         public IActionResult GetCandidates()
         {
             // Used by employer matching screen to compare job skills with candidate skills.
-            return Ok(_context.Candidates.ToList());
+            return Ok(_context.Candidates
+                .Select(candidate => ToEmployerCandidateDto(candidate))
+                .ToList());
         }
+        [Authorize(Roles = "employer,admin")]
         [HttpGet("{id}")]
         public IActionResult GetCandidateById(int id)
         {
@@ -41,9 +43,10 @@ namespace JBP.Controllers
                 return NotFound();
             }
 
-            return Ok(candidate);
+            return Ok(ToEmployerCandidateDto(candidate));
         }
 
+        [Authorize(Roles = "jobseeker")]
         [HttpPost]
         public IActionResult AddCandidate(Candidate candidate)
         {
@@ -209,6 +212,7 @@ namespace JBP.Controllers
             }
         }
 
+        [Authorize(Roles = "jobseeker")]
         [HttpPost("upload-resume/{id}")]
         public async Task<IActionResult> UploadResume(
      int id,
@@ -315,5 +319,20 @@ namespace JBP.Controllers
 
             return Ok(candidate);
         }
+
+        private static object ToEmployerCandidateDto(Candidate candidate) => new
+        {
+            candidate.Id,
+            candidate.FullName,
+            candidate.Skills,
+            candidate.Experience,
+            candidate.Location,
+            candidate.Salary,
+            candidate.CandidateType,
+            candidate.ResumePath,
+            candidate.AadhaarVerified,
+            candidate.PanVerified,
+            candidate.UanVerified
+        };
     }
 }
