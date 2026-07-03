@@ -652,6 +652,37 @@ select:invalid, select option[value=""] { color:var(--gray-400); }
                 .login-footer a:hover {
                     text-decoration: underline;
                 }
+
+        .auth-top-link {
+            display: flex;
+            justify-content: flex-end;
+            gap: .35rem;
+            font-size: .84rem;
+            margin-bottom: 1rem;
+            color: var(--gray-500);
+        }
+
+            .auth-top-link a {
+                color: var(--blue-mid);
+                cursor: pointer;
+                font-weight: 700;
+            }
+
+        .employer-register-card {
+            max-width: 520px;
+        }
+
+        .field-warning {
+            color: #b91c1c;
+            display: block;
+            font-size: .8rem;
+            font-weight: 700;
+            margin-top: .4rem;
+        }
+
+        .otp-dialog-card {
+            max-width: 420px;
+        }
         /* ── PASSWORD TOGGLE ── */
         .otp-block {
             margin-top: 1rem;
