@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -47,7 +48,17 @@ namespace Jobsy.API.Controllers
                 return BadRequest("Email is required");
             }
 
+            if (purpose == "employer-register" && !IsOfficialEmail(email))
+            {
+                return BadRequest("Please use an official company email address");
+            }
+
             if (purpose == "register" && _context.Users.Any(u => u.Email == email))
+            {
+                return BadRequest("Email already registered");
+            }
+
+            if (purpose == "employer-register" && _context.Users.Any(u => u.Email == email))
             {
                 return BadRequest("Email already registered");
             }
@@ -97,9 +108,9 @@ namespace Jobsy.API.Controllers
 
             var role = NormalizeRole(dto.Role);
 
-            if (string.IsNullOrWhiteSpace(role))
+            if (role != "jobseeker")
             {
-                return BadRequest("Please select a valid role");
+                return BadRequest("Use employer registration for employer accounts");
             }
 
             // Store only the BCrypt hash. The original password is never saved.
@@ -108,7 +119,7 @@ namespace Jobsy.API.Controllers
                 FullName = dto.FullName,
                 Email = dto.Email,
                 Password = BCrypt.Net.BCrypt.HashPassword(dto.Password),
-                Role = role,
+                Role = "jobseeker",
                 AuthProvider = "Email",
                 EmailVerified = true
             };
@@ -117,6 +128,89 @@ namespace Jobsy.API.Controllers
             _context.SaveChanges();
 
             return Ok("User registered successfully");
+        }
+
+        [HttpPost("register-employer")]
+        public IActionResult RegisterEmployer(EmployerRegisterDto dto)
+        {
+            var email = NormalizeEmail(dto.OfficialEmail);
+
+            if (string.IsNullOrWhiteSpace(dto.CompanyName) ||
+                string.IsNullOrWhiteSpace(email) ||
+                string.IsNullOrWhiteSpace(dto.Password) ||
+                string.IsNullOrWhiteSpace(dto.GstNumber) ||
+                string.IsNullOrWhiteSpace(dto.CinNumber) ||
+                string.IsNullOrWhiteSpace(dto.Website))
+            {
+                return BadRequest("Please fill all employer registration fields");
+            }
+
+            if (!IsOfficialEmail(email))
+            {
+                return BadRequest("Please use an official company email address");
+            }
+
+            if (!IsValidGst(dto.GstNumber))
+            {
+                return BadRequest("Enter a valid 15-character GST number");
+            }
+
+            if (!IsValidCin(dto.CinNumber))
+            {
+                return BadRequest("Enter a valid 21-character CIN number");
+            }
+
+            if (!IsValidWebsite(dto.Website))
+            {
+                return BadRequest("Enter a valid company website");
+            }
+
+            if (!WebsiteMatchesEmail(dto.Website, email))
+            {
+                return BadRequest("Official email domain must match the company website");
+            }
+
+            if (_context.Users.Any(u => u.Email == email))
+            {
+                return BadRequest("Email already registered");
+            }
+
+            if (_context.EmployerProfiles.Any(e => e.OfficialEmail == email))
+            {
+                return BadRequest("Employer already registered");
+            }
+
+            if (!VerifyOtp(email, dto.Otp, "employer-register"))
+            {
+                return BadRequest("Invalid or expired OTP");
+            }
+
+            var user = new User
+            {
+                FullName = dto.CompanyName.Trim(),
+                Email = email,
+                Password = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+                Role = "employer",
+                AuthProvider = "Email",
+                EmailVerified = true
+            };
+
+            _context.Users.Add(user);
+            _context.SaveChanges();
+
+            _context.EmployerProfiles.Add(new EmployerProfile
+            {
+                UserId = user.Id,
+                CompanyName = dto.CompanyName.Trim(),
+                OfficialEmail = email,
+                GstNumber = dto.GstNumber.Trim().ToUpperInvariant(),
+                CinNumber = dto.CinNumber.Trim().ToUpperInvariant(),
+                Website = NormalizeWebsite(dto.Website)
+            });
+
+            _context.SaveChanges();
+
+            return Ok("Employer registered successfully");
         }
 
         // Validates credentials and asks for OTP before issuing a JWT.
@@ -132,9 +226,7 @@ namespace Jobsy.API.Controllers
                 return Unauthorized("Invalid email or password");
             }
 
-            var isPasswordValid = BCrypt.Net.BCrypt.Verify(dto.Password, user.Password);
-
-            if (!isPasswordValid)
+            if (!VerifyStoredPassword(user, dto.Password))
             {
                 return Unauthorized("Invalid email or password");
             }
@@ -155,7 +247,7 @@ namespace Jobsy.API.Controllers
 
             if (user == null ||
                 string.IsNullOrWhiteSpace(user.Password) ||
-                !BCrypt.Net.BCrypt.Verify(dto.Password, user.Password))
+                !VerifyStoredPassword(user, dto.Password))
             {
                 return Unauthorized("Invalid email or password");
             }
@@ -195,6 +287,11 @@ namespace Jobsy.API.Controllers
                 if (string.IsNullOrWhiteSpace(role))
                 {
                     return BadRequest("Please select a role before using Google sign in");
+                }
+
+                if (role == "employer")
+                {
+                    return BadRequest("Use employer registration for employer accounts");
                 }
 
                 user = new User
@@ -259,6 +356,43 @@ namespace Jobsy.API.Controllers
                 role = user.Role,
                 email = user.Email
             };
+        }
+
+        private bool VerifyStoredPassword(User user, string password)
+        {
+            if (string.IsNullOrWhiteSpace(user.Password))
+            {
+                return false;
+            }
+
+            var storedPassword = user.Password.Trim();
+            var looksLikeBcrypt =
+                storedPassword.StartsWith("$2a$") ||
+                storedPassword.StartsWith("$2b$") ||
+                storedPassword.StartsWith("$2y$");
+
+            if (looksLikeBcrypt)
+            {
+                try
+                {
+                    return BCrypt.Net.BCrypt.Verify(password, storedPassword);
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
+            // Legacy accounts may still have plain passwords from older builds.
+            // On successful login, migrate them to BCrypt transparently.
+            if (!string.Equals(storedPassword, password, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            user.Password = BCrypt.Net.BCrypt.HashPassword(password);
+            _context.SaveChanges();
+            return true;
         }
 
         private bool VerifyOtp(string email, string otp, string purpose)
@@ -334,7 +468,9 @@ namespace Jobsy.API.Controllers
         private static string NormalizePurpose(string purpose) =>
             string.Equals(purpose, "login", StringComparison.OrdinalIgnoreCase)
                 ? "login"
-                : "register";
+                : string.Equals(purpose, "employer-register", StringComparison.OrdinalIgnoreCase)
+                    ? "employer-register"
+                    : "register";
 
         private static string NormalizeRole(string role)
         {
@@ -343,6 +479,72 @@ namespace Jobsy.API.Controllers
             return normalized is "jobseeker" or "employer" or "admin"
                 ? normalized
                 : string.Empty;
+        }
+
+        private static bool IsOfficialEmail(string email)
+        {
+            var domain = email.Split('@').LastOrDefault()?.Trim().ToLowerInvariant();
+
+            if (string.IsNullOrWhiteSpace(domain) || !domain.Contains('.'))
+            {
+                return false;
+            }
+
+            var blockedDomains = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "gmail.com", "googlemail.com", "yahoo.com", "yahoo.co.in",
+                "outlook.com", "hotmail.com", "live.com", "msn.com",
+                "icloud.com", "me.com", "aol.com", "proton.me",
+                "protonmail.com", "zoho.com", "mail.com", "gmx.com",
+                "rediffmail.com", "yandex.com"
+            };
+
+            return !blockedDomains.Contains(domain);
+        }
+
+        private static bool IsValidGst(string value) =>
+            Regex.IsMatch((value ?? string.Empty).Trim().ToUpperInvariant(),
+                "^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$");
+
+        private static bool IsValidCin(string value) =>
+            Regex.IsMatch((value ?? string.Empty).Trim().ToUpperInvariant(),
+                "^[A-Z][0-9]{5}[A-Z]{2}[0-9]{4}[A-Z]{3}[0-9]{6}$");
+
+        private static bool IsValidWebsite(string value) =>
+            Uri.TryCreate(NormalizeWebsite(value), UriKind.Absolute, out var uri) &&
+            (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps) &&
+            !string.IsNullOrWhiteSpace(uri.Host) &&
+            uri.Host.Contains('.');
+
+        private static string NormalizeWebsite(string value)
+        {
+            var website = (value ?? string.Empty).Trim();
+
+            if (!website.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
+                !website.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                website = $"https://{website}";
+            }
+
+            return website;
+        }
+
+        private static bool WebsiteMatchesEmail(string website, string email)
+        {
+            if (!Uri.TryCreate(NormalizeWebsite(website), UriKind.Absolute, out var uri))
+            {
+                return false;
+            }
+
+            var websiteHost = uri.Host.ToLowerInvariant();
+            var emailDomain = email.Split('@').LastOrDefault()?.ToLowerInvariant() ?? string.Empty;
+
+            if (websiteHost.StartsWith("www."))
+            {
+                websiteHost = websiteHost[4..];
+            }
+
+            return emailDomain == websiteHost || emailDomain.EndsWith($".{websiteHost}");
         }
 
         private class GoogleTokenInfo
