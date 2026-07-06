@@ -11,11 +11,8 @@
 </head>
 <body>
     <div class="site-intro" id="siteIntro" role="status" aria-label="Loading VistaJobs">
-        <div class="intro-orbit orbit-one"></div>
-        <div class="intro-orbit orbit-two"></div>
-        <img src="assets/vistajobs-logo.png" alt="" class="intro-logo" />
+        <img src="assets/logo-loader.gif?v=2" alt="" class="intro-gif" />
         <p class="intro-welcome">Welcome to <strong>Vista<span>Jobs</span></strong></p>
-        <div class="intro-loader" aria-hidden="true"><i></i><i></i><i></i></div>
     </div>
 
     <!-- ═══════════════════════════════════════
@@ -494,16 +491,12 @@
     <div id="page-employer" class="page">
         <div class="employer-layout">
 
-            <!-- Left: Post Requirements -->
+            <!-- Left: Matching Requirements -->
             <div class="employer-post-card">
-                <h2>📋  Job Requirements</h2>
+                <h2>📋  Matching Requirements</h2>
 
                 <div class="form-group">
-                    <label for="emp-company">Company Name <span class="req">*</span></label>
-                    <input type="text" id="emp-company" placeholder="e.g. TechCorp Solutions" />
-                </div>
-                <div class="form-group">
-                    <label for="emp-jobtitle">Job Title <span class="req">*</span></label>
+                    <label for="emp-jobtitle">Job Role <span class="req">*</span></label>
                     <input type="text" id="emp-jobtitle" placeholder="e.g. React Developer, Data Analyst" />
                 </div>
                 <div class="form-group">
@@ -534,26 +527,10 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="emp-location">Job Location</label>
-                        <input type="text" id="emp-location" placeholder="enter the job location, Remote" />
+                        <label for="emp-location">Preferred Location</label>
+                        <input type="text" id="emp-location" placeholder="e.g. Hyderabad, Remote" />
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="emp-salary">Salary Offered</label>
-                    <select id="emp-salary">
-                        <option value="">Select range</option>
-                        <option>Below ₹25,000 / month</option>
-                        <option>₹25,000 – ₹50,000 / month</option>
-                        <option>₹50,000 – ₹1,00,000 / month</option>
-                        <option>₹1,00,000 – ₹2,00,000 / month</option>
-                        <option>Above ₹2,00,000 / month</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="emp-desc">Job Description</label>
-                    <textarea id="emp-desc" placeholder="Describe the role, responsibilities, required qualifications, and any perks…" rows="4"></textarea>
-                </div>
-
                 <button class="btn-submit" onclick="findCandidates()">
                     🔍 Find Matching Candidates
                 </button>
@@ -680,6 +657,10 @@
                     <img src="assets/vistajobs-logo.png" alt="VistaJobs logo" class="brand-logo" />
                     <span class="brand-text">Vista<span>Jobs</span></span>
                 </div>
+                <div class="auth-top-link">
+                    <span>Hiring?</span>
+                    <a onclick="showPage('employer-register')">Register as employer</a>
+                </div>
                 <h1>Create An Account</h1>
                 <div class="form-group">
                     <label for="register-name">Full Name <span class="req">*</span></label>
@@ -696,12 +677,6 @@
                         <button class="toggle-pass" type="button" onclick="togglePassword('register-pass')" title="Toggle password">👁</button>
                     </div>
                 </div>
-                <label for="register-role">Role</label>
-                <select id="register-role" class="form-control">
-                    <option value="">Select Role</option>
-                    <option value="jobseeker">Job Seeker</option>
-                    <option value="employer">Employer</option>
-                </select>
                 <div style="margin-top:1.25rem;">
                     <button id="register-submit-btn" class="btn-submit" onclick="handleRegister()">Send OTP</button>
                 </div>
@@ -720,6 +695,52 @@
                 <!--<div class="form-page">
 
                 </div>-->
+            </div>
+        </div>
+    </div>
+    <div id="page-employer-register" class="page">
+        <div class="login-page">
+            <div class="login-card employer-register-card">
+                <div class="login-logo">
+                    <img src="assets/vistajobs-logo.png" alt="VistaJobs logo" class="brand-logo" />
+                    <span class="brand-text">Vista<span>Jobs</span></span>
+                </div>
+                <h1>Employer Registration</h1>
+                <div class="form-group">
+                    <label for="employer-company-name">Company Name <span class="req">*</span></label>
+                    <input type="text" id="employer-company-name" placeholder="e.g. TechCorp Solutions" autocomplete="organization" value="" />
+                </div>
+                <div class="form-group">
+                    <label for="employer-official-email">Official Email <span class="req">*</span></label>
+                    <input type="email" id="employer-official-email" placeholder="hr@company.com" autocomplete="email" value="" />
+                    <small class="field-warning hidden" id="employer-email-warning">Personal email domains are not allowed for employer registration.</small>
+                </div>
+                <div class="form-group">
+                    <label for="employer-register-pass">Password <span class="req">*</span></label>
+                    <div class="input-group">
+                        <input type="password" id="employer-register-pass" placeholder="Enter password" autocomplete="new-password" value="" />
+                        <button class="toggle-pass" type="button" onclick="togglePassword('employer-register-pass')" title="Toggle password">ðŸ‘</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="employer-gst-number">GST Number <span class="req">*</span></label>
+                    <input type="text" id="employer-gst-number" placeholder="15-character GST number" maxlength="15" value="" />
+                </div>
+                <div class="form-group">
+                    <label for="employer-cin-number">CIN Number <span class="req">*</span></label>
+                    <input type="text" id="employer-cin-number" placeholder="21-character CIN number" maxlength="21" value="" />
+                </div>
+                <div class="form-group">
+                    <label for="employer-website">Website <span class="req">*</span></label>
+                    <input type="url" id="employer-website" placeholder="https://company.com" autocomplete="url" value="" />
+                </div>
+                <div style="margin-top:1.25rem;">
+                    <button id="employer-register-submit-btn" class="btn-submit" onclick="requestEmployerRegisterOtp()">Send OTP</button>
+                </div>
+                <div class="login-footer" style="margin-top:2rem;">
+                    Already verified?
+                    <a onclick="showPage('login')" style="font-weight:600;">Sign in</a>
+                </div>
             </div>
         </div>
     </div>
@@ -770,7 +791,6 @@
                     <select id="login-google-role" class="form-control">
                         <option value="">Select Role</option>
                         <option value="jobseeker">Job Seeker</option>
-                        <option value="employer">Employer</option>
                     </select>
                 </div>
                 <div id="google-login-btn" class="google-auth-slot"></div>
@@ -903,6 +923,36 @@
                 ← Back
 
             </button>
+
+        </div>
+
+    </div>
+    <div id="employerOtpModal"
+         class="profile-modal"
+         style="display:none;">
+
+        <div class="profile-card otp-dialog-card">
+
+            <div class="profile-header">
+
+                <div class="profile-title">
+                    Verify Official Email
+                </div>
+
+                <button class="close-btn"
+                        onclick="closeEmployerOtpModal()">
+                    X
+                </button>
+
+            </div>
+
+            <div class="form-group">
+                <label for="employer-register-otp">Email OTP <span class="req">*</span></label>
+                <input type="text" id="employer-register-otp" placeholder="Enter 6-digit OTP" inputmode="numeric" maxlength="6" value="" />
+                <button class="link-action" type="button" onclick="requestEmployerRegisterOtp(true)">Resend OTP</button>
+            </div>
+
+            <button id="employer-verify-btn" class="btn-submit" onclick="handleEmployerRegister()">Verify OTP & Create Account</button>
 
         </div>
 
