@@ -1,6 +1,6 @@
 'use strict';
 
-const API_BASE_URL = "https://vistajobs-api-aqahcnabazbzf8hz.centralindia-01.azurewebsites.net";
+const API_BASE_URL = "https://vistajobs-api-aqahcnabazbzf8hz.centralindia-01.azurewebsites.net/api";
 
 // Login state is kept only for this browser session.
 // This prevents stale user details from appearing after closing/reopening the browser.
@@ -182,7 +182,7 @@ async function requestRegisterOtp(isResend = false) {
         return;
     }
 
-    const resp = await fetch(`${API_BASE_URL}/api/Auth/request-otp`, {
+    const resp = await fetch(`${API_BASE_URL}/Auth/request-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, purpose: 'register' })
@@ -280,7 +280,7 @@ async function requestEmployerRegisterOtp(isResend = false) {
 
     if (!data) return;
 
-    const resp = await fetch(`${API_BASE_URL}/api/Auth/request-otp`, {
+    const resp = await fetch(`${API_BASE_URL}/Auth/request-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: data.officialEmail, purpose: 'employer-register' })
@@ -1645,7 +1645,7 @@ async function requestLoginOtp(isResend = false) {
         return;
     }
 
-    const resp = await fetch(`${API_BASE_URL}/api/Auth/request-otp`, {
+    const resp = await fetch(`${API_BASE_URL}/Auth/request-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, purpose: 'login' })
