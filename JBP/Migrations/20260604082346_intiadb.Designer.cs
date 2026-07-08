@@ -12,8 +12,13 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace JBP.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
+<<<<<<< Updated upstream:JBP/Migrations/20260604082346_intiadb.Designer.cs
     [Migration("20260604082346_intiadb")]
     partial class InitialDb
+=======
+    [Migration("20260521064310_intialdb")]
+    partial class Intialdb
+>>>>>>> Stashed changes:JBP/Migrations/20260514070831_AddJobTitleToApplications.Designer.cs
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -36,9 +41,12 @@ namespace JBP.Migrations
                     b.Property<string>("AadhaarNumber")
                         .HasColumnType("nvarchar(max)");
 
+<<<<<<< Updated upstream:JBP/Migrations/20260604082346_intiadb.Designer.cs
                     b.Property<bool>("AadhaarVerified")
                         .HasColumnType("bit");
 
+=======
+>>>>>>> Stashed changes:JBP/Migrations/20260514070831_AddJobTitleToApplications.Designer.cs
                     b.Property<string>("CandidateType")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -67,9 +75,12 @@ namespace JBP.Migrations
                     b.Property<string>("PanNumber")
                         .HasColumnType("nvarchar(max)");
 
+<<<<<<< Updated upstream:JBP/Migrations/20260604082346_intiadb.Designer.cs
                     b.Property<bool>("PanVerified")
                         .HasColumnType("bit");
 
+=======
+>>>>>>> Stashed changes:JBP/Migrations/20260514070831_AddJobTitleToApplications.Designer.cs
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -86,17 +97,21 @@ namespace JBP.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+<<<<<<< Updated upstream:JBP/Migrations/20260604082346_intiadb.Designer.cs
                     b.Property<string>("UanNumber")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("UanVerified")
                         .HasColumnType("bit");
 
+=======
+>>>>>>> Stashed changes:JBP/Migrations/20260514070831_AddJobTitleToApplications.Designer.cs
                     b.HasKey("Id");
 
                     b.ToTable("Candidates");
                 });
 
+<<<<<<< Updated upstream:JBP/Migrations/20260604082346_intiadb.Designer.cs
             modelBuilder.Entity("JBP.Models.EmploymentHistory", b =>
                 {
                     b.Property<int>("Id")
@@ -137,6 +152,8 @@ namespace JBP.Migrations
                     b.ToTable("EmploymentHistories");
                 });
 
+=======
+>>>>>>> Stashed changes:JBP/Migrations/20260514070831_AddJobTitleToApplications.Designer.cs
             modelBuilder.Entity("JBP.Models.Job", b =>
                 {
                     b.Property<int>("Id")
