@@ -113,7 +113,7 @@ builder.Services.AddCors(options =>
                 "http://localhost:5500",
 
                 // Azure Frontend URL (deploy ayyaka replace cheyyi)
-                "https://YOUR-FRONTEND.azurestaticapps.net"
+                "https://thankful-rock-0c403ba00.7.azurestaticapps.net"
             )
             .AllowAnyHeader()
             .AllowAnyMethod()
