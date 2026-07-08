@@ -182,7 +182,7 @@ async function requestRegisterOtp(isResend = false) {
         return;
     }
 
-    const resp = await fetch(`${API_BASE_URL}/Auth/request-otp`, {
+    const resp = await fetch(`${API_BASE_URL}/api/Auth/request-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, purpose: 'register' })
@@ -280,7 +280,7 @@ async function requestEmployerRegisterOtp(isResend = false) {
 
     if (!data) return;
 
-    const resp = await fetch(`${API_BASE_URL}/Auth/request-otp`, {
+    const resp = await fetch(`${API_BASE_URL}/api/Auth/request-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: data.officialEmail, purpose: 'employer-register' })
@@ -1645,7 +1645,7 @@ async function requestLoginOtp(isResend = false) {
         return;
     }
 
-    const resp = await fetch(`${API_BASE_URL}/Auth/request-otp`, {
+    const resp = await fetch(`${API_BASE_URL}/api/Auth/request-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, purpose: 'login' })
