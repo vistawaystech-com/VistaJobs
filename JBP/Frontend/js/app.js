@@ -9,6 +9,8 @@ const GOOGLE_CLIENT_ID = "280183771546-5q3kn4tsh1pt511ea9928pd01nq5ppgp.apps.goo
 let registerOtpSent = false;
 let loginOtpSent = false;
 let employerRegisterOtpSent = false;
+let resetOtpSent = false;
+let resetOtpVerified = false;
 let googleAuthInitialized = false;
 
 function clearSavedLogin() {
@@ -1042,6 +1044,11 @@ function validateAadhaar(aadhaar) {
     return /^\d{12}$/.test(aadhaar);
 }
 
+function validatePassword(password) {
+
+    return /^(?=.*[A-Za-z])(?=.*\d).{6,}$/.test(password || "");
+}
+
 /* SUBMIT JOBSEEKER */
 function submitJobseeker() {
 
@@ -1663,6 +1670,199 @@ async function requestLoginOtp(isResend = false) {
     const submit = document.getElementById('login-submit-btn');
     if (submit) submit.textContent = 'Verify OTP & Login';
     showToast(isResend ? 'OTP resent to your email' : 'OTP sent to your email', 'success');
+}
+
+function setButtonLoading(buttonId, isLoading, loadingText, defaultText) {
+    const button = document.getElementById(buttonId);
+
+    if (!button) {
+        return;
+    }
+
+    button.disabled = isLoading;
+    button.textContent = isLoading ? loadingText : defaultText;
+}
+
+function resetPasswordFormState(clearEmail = false) {
+    if (clearEmail) {
+        const email = document.getElementById('reset-email');
+        if (email) email.value = '';
+    }
+
+    ['reset-otp', 'reset-new-pass', 'reset-confirm-pass'].forEach(id => {
+        const field = document.getElementById(id);
+        if (field) field.value = '';
+    });
+
+    const otpBlock = document.getElementById('reset-otp-block');
+    if (otpBlock) otpBlock.style.display = 'none';
+
+    const passwordFields = document.getElementById('reset-password-fields');
+    if (passwordFields) passwordFields.style.display = 'none';
+
+    resetOtpSent = false;
+    resetOtpVerified = false;
+    setButtonLoading('reset-send-otp-btn', false, 'Sending...', 'Send OTP');
+    setButtonLoading('reset-verify-otp-btn', false, 'Verifying...', 'Verify OTP');
+    setButtonLoading('reset-change-pass-btn', false, 'Changing...', 'Change Password');
+}
+
+function openResetPasswordPage() {
+    const loginEmail = document.getElementById('login-email')?.value.trim();
+    const resetEmail = document.getElementById('reset-email');
+
+    resetPasswordFormState(true);
+
+    if (loginEmail && validateEmail(loginEmail) && resetEmail) {
+        resetEmail.value = loginEmail;
+    }
+
+    showPage('reset-password');
+}
+
+async function sendResetOtp(isResend = false) {
+    const email = document.getElementById('reset-email')?.value.trim();
+
+    if (!email || !validateEmail(email)) {
+        showToast('Enter a valid registered email', 'error');
+        return;
+    }
+
+    try {
+        setButtonLoading('reset-send-otp-btn', true, 'Sending...', 'Send OTP');
+
+        const response = await fetch(`${API_BASE_URL}/Auth/forgot-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+
+        if (!response.ok) {
+            const message = await response.text();
+            throw new Error(message || 'Could not send OTP');
+        }
+
+        resetOtpSent = true;
+        resetOtpVerified = false;
+
+        const otpBlock = document.getElementById('reset-otp-block');
+        if (otpBlock) otpBlock.style.display = 'block';
+
+        const passwordFields = document.getElementById('reset-password-fields');
+        if (passwordFields) passwordFields.style.display = 'none';
+
+        ['reset-otp', 'reset-new-pass', 'reset-confirm-pass'].forEach(id => {
+            const field = document.getElementById(id);
+            if (field) field.value = '';
+        });
+
+        showToast(isResend ? 'OTP sent successfully.' : 'OTP sent successfully.', 'success');
+    } catch (error) {
+        console.error(error);
+        showToast(error.message || 'Could not send OTP', 'error');
+    } finally {
+        setButtonLoading('reset-send-otp-btn', false, 'Sending...', 'Send OTP');
+    }
+}
+
+async function verifyResetOtp() {
+    const email = document.getElementById('reset-email')?.value.trim();
+    const otp = document.getElementById('reset-otp')?.value.trim();
+
+    if (!resetOtpSent) {
+        showToast('Please request an OTP first', 'error');
+        return;
+    }
+
+    if (!email || !validateEmail(email) || !otp) {
+        showToast('Enter your email and OTP', 'error');
+        return;
+    }
+
+    try {
+        setButtonLoading('reset-verify-otp-btn', true, 'Verifying...', 'Verify OTP');
+
+        const response = await fetch(`${API_BASE_URL}/Auth/verify-reset-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, otp })
+        });
+
+        if (!response.ok) {
+            const message = await response.text();
+            throw new Error(message || 'Invalid or expired OTP');
+        }
+
+        resetOtpVerified = true;
+        const passwordFields = document.getElementById('reset-password-fields');
+        if (passwordFields) passwordFields.style.display = 'block';
+        showToast('OTP verified successfully.', 'success');
+    } catch (error) {
+        console.error(error);
+        showToast(error.message || 'Invalid or expired OTP', 'error');
+    } finally {
+        setButtonLoading('reset-verify-otp-btn', false, 'Verifying...', 'Verify OTP');
+    }
+}
+
+async function changeResetPassword() {
+    const email = document.getElementById('reset-email')?.value.trim();
+    const otp = document.getElementById('reset-otp')?.value.trim();
+    const newPassword = document.getElementById('reset-new-pass')?.value.trim();
+    const confirmPassword = document.getElementById('reset-confirm-pass')?.value.trim();
+
+    if (!resetOtpVerified) {
+        showToast('Please verify the OTP before changing your password', 'error');
+        return;
+    }
+
+    if (!newPassword || !confirmPassword) {
+        showToast('Please enter and confirm your new password', 'error');
+        return;
+    }
+
+    if (newPassword !== confirmPassword) {
+        showToast('New Password and Confirm Password must match', 'error');
+        return;
+    }
+
+    if (!validatePassword(newPassword)) {
+        showToast('Password must be at least 6 characters and include at least one letter and one number', 'error');
+        return;
+    }
+
+    try {
+        setButtonLoading('reset-change-pass-btn', true, 'Changing...', 'Change Password');
+
+        const response = await fetch(`${API_BASE_URL}/Auth/reset-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email,
+                otp,
+                newPassword,
+                confirmPassword
+            })
+        });
+
+        if (!response.ok) {
+            const message = await response.text();
+            throw new Error(message || 'Password reset failed');
+        }
+
+        showToast('Password changed successfully.', 'success');
+        resetPasswordFormState(true);
+
+        setTimeout(() => {
+            showPage('login');
+            showToast('Your password has been reset successfully. Please login with your new password.', 'success');
+        }, 900);
+    } catch (error) {
+        console.error(error);
+        showToast(error.message || 'Password reset failed', 'error');
+    } finally {
+        setButtonLoading('reset-change-pass-btn', false, 'Changing...', 'Change Password');
+    }
 }
 
 function completeLogin(data) {

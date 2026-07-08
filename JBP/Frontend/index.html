@@ -106,8 +106,8 @@
                 <h2 id="home-links-title">Let’s build the next step of your career.</h2>
                 <p class="home-links-copy">Learn what we stand for or reach out to our team. These pages are ready for you to personalise with your own details.</p>
                 <div class="home-link-grid">
-                    <a class="home-link-card" href="about.html"><span class="home-link-icon">01</span><h3>About Us</h3><p>Our story, purpose, and the people behind VistaJobs.</p><span class="home-link-action">Explore our story <b>→</b></span></a>
-                    <a class="home-link-card" href="contact.html"><span class="home-link-icon">02</span><h3>Contact Us</h3><p>Questions, feedback, or partnership ideas — we’d love to hear them.</p><span class="home-link-action">Get in touch <b>→</b></span></a>
+                    <a class="home-link-card" href="about.html"><<h3>About Us</h3><p>Our story, purpose, and the people behind VistaJobs.</p><span class="home-link-action">Explore our story <b>→</b></span></a>
+                    <a class="home-link-card" href="contact.html">;<h3>Contact Us</h3><p>Questions, feedback, or partnership ideas — we’d love to hear them.</p><span class="home-link-action">Get in touch <b>→</b></span></a>
                 </div>
             </div>
         </section>
@@ -670,6 +670,7 @@
                     <label for="register-email">Email Address <span class="req">*</span></label>
                     <input type="email" id="register-email" placeholder="you@example.com" autocomplete="email" value="" />
                 </div>
+
                 <div class="form-group">
                     <label for="register-pass">Password <span class="req">*</span></label>
                     <div class="input-group">
@@ -677,6 +678,14 @@
                         <button class="toggle-pass" type="button" onclick="togglePassword('register-pass')" title="Toggle password">👁</button>
                     </div>
                 </div>
+                <!--<div class="form-group google-role-group">
+                    <label for="login-google-role">Role for new Google accounts</label>
+                    <select id="login-google-role" class="form-control">
+                        <option value="">Select Role</option>
+                        <option value="jobseeker">Job Seeker</option>
+                        <option value="Employer">Employer</option>
+                    </select>
+                </div>-->
                 <div style="margin-top:1.25rem;">
                     <button id="register-submit-btn" class="btn-submit" onclick="handleRegister()">Send OTP</button>
                 </div>
@@ -694,7 +703,7 @@
                 <!--after register it should automatically clear the form-->
                 <!--<div class="form-page">
 
-                </div>-->
+    </div>-->
             </div>
         </div>
     </div>
@@ -779,20 +788,20 @@
                     <input type="text" id="login-otp" placeholder="Enter 6-digit OTP" inputmode="numeric" maxlength="6" value="" />
                     <button class="link-action" type="button" onclick="requestLoginOtp(true)">Resend OTP</button>
                 </div>
-                <span class="forgot-link">Forgot password?</span>
+                <span class="forgot-link" onclick="openResetPasswordPage()">Forgot password?</span>
 
                 <button id="login-submit-btn" class="btn-submit" onclick="handleLogin()">
                     🔐 Login
                 </button>
 
                 <div class="auth-divider"><span>or</span></div>
-                <div class="form-group google-role-group">
+                <!--<div class="form-group google-role-group">
                     <label for="login-google-role">Role for new Google accounts</label>
                     <select id="login-google-role" class="form-control">
                         <option value="">Select Role</option>
                         <option value="jobseeker">Job Seeker</option>
                     </select>
-                </div>
+                </div>-->
                 <div id="google-login-btn" class="google-auth-slot"></div>
 
                 <div class="login-footer">
@@ -802,17 +811,70 @@
                     <a onclick="showPage('employer')">Register </a>-->
                 </div>
 
-                <!-- Demo hint -->
-                <div style="margin-top:1.5rem;padding:1rem;background:var(--gray-50);border-radius:10px;border:1px solid var(--gray-200);">
-                    <p style="font-size:.8rem;color:var(--gray-500);text-align:center;line-height:1.7;">
+            
+                <!--<div style="margin-top:1.5rem;padding:1rem;background:var(--gray-50);border-radius:10px;border:1px solid var(--gray-200);">
+                    <p style="font-size:.8rem;color:var(--gray-500);text-align:center;line-height:1.7;">-->
                         <!--<strong>Demo Credentials</strong><br />
                         Jobseeker: jobseeker@demo.com / demo123<br />
                         Employer: employer@demo.com / demo123-->
-                    </p>
-                </div>
+                    <!--</p>-->
+                <!--</div>-->
             </div>
         </div>
     </div><!-- /page-login -->
+    <div id="page-reset-password" class="page">
+        <div class="login-page">
+            <div class="login-card">
+                <div class="login-logo">
+                    <img src="assets/vistajobs-logo.png" alt="VistaJobs logo" class="brand-logo" />
+                    <span class="brand-text">Vista<span>Jobs</span></span>
+                </div>
+                <h2>Reset Password</h2>
+                <p class="sub">Verify your registered email to set a new password</p>
+
+                <div class="form-group">
+                    <label for="reset-email">Email Address <span class="req">*</span></label>
+                    <input type="email" id="reset-email" placeholder="you@example.com" autocomplete="email" value="" />
+                </div>
+
+                <button id="reset-send-otp-btn" class="btn-submit" onclick="sendResetOtp()">
+                    Send OTP
+                </button>
+
+                <div id="reset-otp-block" class="form-group otp-block" style="display:none;">
+                    <label for="reset-otp">Email OTP <span class="req">*</span></label>
+                    <input type="text" id="reset-otp" placeholder="Enter 6-digit OTP" inputmode="numeric" maxlength="6" value="" />
+                    <button class="link-action" type="button" onclick="sendResetOtp(true)">Resend OTP</button>
+                    <button id="reset-verify-otp-btn" class="btn-submit" type="button" onclick="verifyResetOtp()">Verify OTP</button>
+                </div>
+
+                <div id="reset-password-fields" style="display:none;">
+                    <div class="form-group">
+                        <label for="reset-new-pass">New Password <span class="req">*</span></label>
+                        <div class="input-group">
+                            <input type="password" id="reset-new-pass" placeholder="Enter new password" autocomplete="new-password" value="" />
+                            <button class="toggle-pass" type="button" onclick="togglePassword('reset-new-pass')" title="Toggle password">ðŸ‘</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="reset-confirm-pass">Confirm Password <span class="req">*</span></label>
+                        <div class="input-group">
+                            <input type="password" id="reset-confirm-pass" placeholder="Confirm new password" autocomplete="new-password" value="" />
+                            <button class="toggle-pass" type="button" onclick="togglePassword('reset-confirm-pass')" title="Toggle password">ðŸ‘</button>
+                        </div>
+                    </div>
+                    <button id="reset-change-pass-btn" class="btn-submit" type="button" onclick="changeResetPassword()">
+                        Change Password
+                    </button>
+                </div>
+
+                <div class="login-footer">
+                    Remember your password?
+                    <a onclick="showPage('login')">Sign in</a>
+                </div>
+            </div>
+        </div>
+    </div><!-- /page-reset-password -->
     <!-- ═══════════════════════════════════════
          FOOTER
     ════════════════════════════════════════ -->

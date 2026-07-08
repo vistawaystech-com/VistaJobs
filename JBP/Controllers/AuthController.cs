@@ -88,6 +88,111 @@ namespace Jobsy.API.Controllers
             return Ok("OTP sent to your email");
         }
 
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordDto dto)
+        {
+            var email = NormalizeEmail(dto.Email);
+
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return BadRequest("Email is required");
+            }
+
+            var user = _context.Users.FirstOrDefault(u => u.Email == email);
+
+            if (user == null)
+            {
+                return BadRequest("Email is not registered");
+            }
+
+            var code = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
+
+            _context.EmailOtpVerifications.Add(new EmailOtpVerification
+            {
+                Email = email,
+                Purpose = "reset-password",
+                CodeHash = BCrypt.Net.BCrypt.HashPassword(code),
+                ExpiresAt = DateTime.UtcNow.AddMinutes(5)
+            });
+
+            await _context.SaveChangesAsync();
+
+            await _emailService.SendEmail(
+                email,
+                "Your VistaJobs password reset OTP",
+                $"<p>Your VistaJobs password reset OTP is <strong>{code}</strong>.</p><p>This code expires in 5 minutes.</p>");
+
+            return Ok("OTP sent successfully.");
+        }
+
+        [HttpPost("verify-reset-otp")]
+        public IActionResult VerifyResetOtp(VerifyResetOtpDto dto)
+        {
+            var email = NormalizeEmail(dto.Email);
+
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(dto.Otp))
+            {
+                return BadRequest("Email and OTP are required");
+            }
+
+            if (!_context.Users.Any(u => u.Email == email))
+            {
+                return BadRequest("Email is not registered");
+            }
+
+            if (!VerifyOtp(email, dto.Otp, "reset-password", markUsed: false))
+            {
+                return BadRequest("Invalid or expired OTP");
+            }
+
+            return Ok("OTP verified successfully.");
+        }
+
+        [HttpPost("reset-password")]
+        public IActionResult ResetPassword(ResetPasswordDto dto)
+        {
+            var email = NormalizeEmail(dto.Email);
+
+            if (string.IsNullOrWhiteSpace(email) ||
+                string.IsNullOrWhiteSpace(dto.Otp) ||
+                string.IsNullOrWhiteSpace(dto.NewPassword) ||
+                string.IsNullOrWhiteSpace(dto.ConfirmPassword))
+            {
+                return BadRequest("Please fill all reset password fields");
+            }
+
+            if (dto.NewPassword != dto.ConfirmPassword)
+            {
+                return BadRequest("New Password and Confirm Password must match");
+            }
+
+            if (!IsValidPassword(dto.NewPassword))
+            {
+                return BadRequest("Password must be at least 6 characters and include at least one letter and one number");
+            }
+
+            var user = _context.Users.FirstOrDefault(u => u.Email == email);
+
+            if (user == null)
+            {
+                return BadRequest("Email is not registered");
+            }
+
+            if (!VerifyOtp(email, dto.Otp, "reset-password", markUsed: true))
+            {
+                return BadRequest("Invalid or expired OTP");
+            }
+
+            user.Password = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+            user.AuthProvider = string.IsNullOrWhiteSpace(user.AuthProvider)
+                ? "Email"
+                : user.AuthProvider;
+
+            _context.SaveChanges();
+
+            return Ok("Password changed successfully.");
+        }
+
         // Registers a new user after blocking duplicate email addresses.
         [HttpPost("register")]
         public IActionResult Register(RegisterDto dto)
@@ -101,7 +206,7 @@ namespace Jobsy.API.Controllers
                 return BadRequest("Email already registered");
             }
 
-            if (!VerifyOtp(dto.Email, dto.Otp, "register"))
+            if (!VerifyOtp(dto.Email, dto.Otp, "register", markUsed: true))
             {
                 return BadRequest("Invalid or expired OTP");
             }
@@ -180,7 +285,7 @@ namespace Jobsy.API.Controllers
                 return BadRequest("Employer already registered");
             }
 
-            if (!VerifyOtp(email, dto.Otp, "employer-register"))
+            if (!VerifyOtp(email, dto.Otp, "employer-register", markUsed: true))
             {
                 return BadRequest("Invalid or expired OTP");
             }
@@ -252,7 +357,7 @@ namespace Jobsy.API.Controllers
                 return Unauthorized("Invalid email or password");
             }
 
-            if (!VerifyOtp(dto.Email, dto.Otp, "login"))
+            if (!VerifyOtp(dto.Email, dto.Otp, "login", markUsed: true))
             {
                 return BadRequest("Invalid or expired OTP");
             }
@@ -395,7 +500,11 @@ namespace Jobsy.API.Controllers
             return true;
         }
 
-        private bool VerifyOtp(string email, string otp, string purpose)
+        private bool VerifyOtp(
+            string email,
+            string otp,
+            string purpose,
+            bool markUsed)
         {
             var normalizedEmail = NormalizeEmail(email);
             var normalizedPurpose = NormalizePurpose(purpose);
@@ -418,8 +527,11 @@ namespace Jobsy.API.Controllers
                 return false;
             }
 
-            match.IsUsed = true;
-            _context.SaveChanges();
+            if (markUsed)
+            {
+                match.IsUsed = true;
+                _context.SaveChanges();
+            }
 
             return true;
         }
@@ -470,7 +582,9 @@ namespace Jobsy.API.Controllers
                 ? "login"
                 : string.Equals(purpose, "employer-register", StringComparison.OrdinalIgnoreCase)
                     ? "employer-register"
-                    : "register";
+                    : string.Equals(purpose, "reset-password", StringComparison.OrdinalIgnoreCase)
+                        ? "reset-password"
+                        : "register";
 
         private static string NormalizeRole(string role)
         {
@@ -480,6 +594,12 @@ namespace Jobsy.API.Controllers
                 ? normalized
                 : string.Empty;
         }
+
+        private static bool IsValidPassword(string password) =>
+            !string.IsNullOrWhiteSpace(password) &&
+            password.Length >= 6 &&
+            password.Any(char.IsLetter) &&
+            password.Any(char.IsDigit);
 
         private static bool IsOfficialEmail(string email)
         {
