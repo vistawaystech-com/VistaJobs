@@ -105,11 +105,19 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Frontend runs from localhost during development, so API allows local browser calls.
 builder.Services.AddCors(options =>
 {
+
+    options.AddPolicy("AllowFrontend", policy =>
         options.AddPolicy("AllowFrontend", policy =>
+
     {
         policy
             .WithOrigins(
                 "http://127.0.0.1:5500",
+
+                "http://localhost:5500",
+
+                // Azure Frontend URL (deploy ayyaka replace cheyyi)
+                "https://thankful-rock-0c403ba00.7.azurestaticapps.net"
                 "http://localhost:5500"
 
                 // Azure Frontend URL (deploy ayyaka replace cheyyi)

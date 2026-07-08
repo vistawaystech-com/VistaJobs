@@ -12,8 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace JBP.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
+
     [Migration("20260604082346_intiadb")]
     partial class InitialDb
+
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -35,6 +37,7 @@ namespace JBP.Migrations
 
                     b.Property<string>("AadhaarNumber")
                         .HasColumnType("nvarchar(max)");
+
 
                     b.Property<bool>("AadhaarVerified")
                         .HasColumnType("bit");
@@ -86,6 +89,7 @@ namespace JBP.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+
                     b.Property<string>("UanNumber")
                         .HasColumnType("nvarchar(max)");
 
@@ -136,6 +140,7 @@ namespace JBP.Migrations
 
                     b.ToTable("EmploymentHistories");
                 });
+
 
             modelBuilder.Entity("JBP.Models.Job", b =>
                 {
