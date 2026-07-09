@@ -1,6 +1,6 @@
 'use strict';
 
-const API_BASE_URL = "https://localhost:7250/api";
+const API_BASE_URL = "https://vistajobs-api-aqahcnabazbzf8hz.centralindia-01.azurewebsites.net/api";
 
 // Login state is kept only for this browser session.
 // This prevents stale user details from appearing after closing/reopening the browser.

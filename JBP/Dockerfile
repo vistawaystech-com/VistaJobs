@@ -21,4 +21,4 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 COPY --from=build /src/JBP/Frontend ./wwwroot
-ENTRYPOINT ["dotnet", "JBP.dll"]
+ENTRYPOINT ["dotnet", "VistaJobsApi.dll"]
