@@ -1,6 +1,7 @@
 'use strict';
 
-const API_BASE_URL = "https://vistajobs-api-aqahcnabazbzf8hz.centralindia-01.azurewebsites.net";
+const API_BASE_URL =
+"https://vistajobs-api-aqahcnabazbzf8hz.centralindia-01.azurewebsites.net/api";
 
 // Login state is kept only for this browser session.
 // This prevents stale user details from appearing after closing/reopening the browser.
@@ -8,7 +9,6 @@ const authStorage = sessionStorage;
 const GOOGLE_CLIENT_ID = "280183771546-5q3kn4tsh1pt511ea9928pd01nq5ppgp.apps.googleusercontent.com";
 let registerOtpSent = false;
 let loginOtpSent = false;
-let employerRegisterOtpSent = false;
 let googleAuthInitialized = false;
 
 function clearSavedLogin() {
@@ -32,50 +32,6 @@ const Skills = {
     employer: []
 };
 let allJobs = [];
-
-function normalizeMatchTerm(value) {
-    return String(value || "")
-        .trim()
-        .toLowerCase()
-        .replace(/\s+/g, "")
-        .replace(/[.#]/g, "");
-}
-
-function skillTermsMatch(requiredSkill, candidateSkill) {
-    const required = normalizeMatchTerm(requiredSkill);
-    const candidate = normalizeMatchTerm(candidateSkill);
-
-    if (!required || !candidate) {
-        return false;
-    }
-
-    const aliases = {
-        dotnet: ["net", "aspnet", "csharp"],
-        net: ["dotnet", "aspnet", "csharp"],
-        csharp: ["c#", "dotnet", "net"]
-    };
-
-    return candidate.includes(required) ||
-        required.includes(candidate) ||
-        (aliases[required] || []).some(alias =>
-            candidate.includes(normalizeMatchTerm(alias)));
-}
-
-const PERSONAL_EMAIL_DOMAINS = new Set([
-    "gmail.com", "googlemail.com", "yahoo.com", "yahoo.co.in",
-    "outlook.com", "hotmail.com", "live.com", "msn.com",
-    "icloud.com", "me.com", "aol.com", "proton.me",
-    "protonmail.com", "zoho.com", "mail.com", "gmx.com",
-    "rediffmail.com", "yandex.com"
-]);
-
-function getAuthHeaders(extraHeaders = {}) {
-    const token = authStorage.getItem("token");
-
-    return token
-        ? { ...extraHeaders, Authorization: `Bearer ${token}` }
-        : { ...extraHeaders };
-}
 /* PAGE NAVIGATION */
 function showPage(pageId) {
 
@@ -107,10 +63,10 @@ async function handleRegister() {
         const name = document.getElementById('register-name')?.value.trim();
         const email = document.getElementById('register-email')?.value.trim();
         const password = document.getElementById('register-pass')?.value.trim();
-        const role = "jobseeker";
+        const role = document.getElementById('register-role')?.value;
         const otp = document.getElementById('register-otp')?.value.trim();
 
-        if (!name || !email || !password) {
+        if (!name || !email || !password || !role) {
             showToast('Please fill all fields', 'error');
             return;
         }
@@ -154,6 +110,7 @@ async function handleRegister() {
         const rn = document.getElementById('register-name'); if (rn) rn.value = '';
         const re = document.getElementById('register-email'); if (re) re.value = '';
         const rp = document.getElementById('register-pass'); if (rp) rp.value = '';
+        const rr = document.getElementById('register-role'); if (rr) rr.value = '';
         const ro = document.getElementById('register-otp'); if (ro) ro.value = '';
         const otpBlock = document.getElementById('register-otp-block'); if (otpBlock) otpBlock.style.display = 'none';
         const submit = document.getElementById('register-submit-btn'); if (submit) submit.textContent = 'Send OTP';
@@ -161,7 +118,8 @@ async function handleRegister() {
 
         showToast('Account created successfully', 'success');
         //navigate to login page after registration instead of auto-login, to avoid confusion and also because user may want to login later. This also prevents the need to persist entered credentials in the form which can be a security risk.
-        showPage('login');
+        if (role === 'jobseeker') showPage('login');
+        else if (role === 'employer') showPage('login');
 
         // Navigate to appropriate page without persisting entered credentials
         // if (role === 'jobseeker') showPage('jobseeker');
@@ -200,161 +158,6 @@ async function requestRegisterOtp(isResend = false) {
     const submit = document.getElementById('register-submit-btn');
     if (submit) submit.textContent = 'Verify OTP & Create Account';
     showToast(isResend ? 'OTP resent to your email' : 'OTP sent to your email', 'success');
-}
-
-function getEmailDomain(email) {
-    return String(email || "").trim().toLowerCase().split("@").pop() || "";
-}
-
-function isOfficialEmail(email) {
-    const domain = getEmailDomain(email);
-
-    return validateEmail(email) &&
-        domain.includes(".") &&
-        !PERSONAL_EMAIL_DOMAINS.has(domain);
-}
-
-function normalizeWebsiteHost(website) {
-    try {
-        const value = /^https?:\/\//i.test(website)
-            ? website
-            : `https://${website}`;
-        return new URL(value).hostname.replace(/^www\./i, "").toLowerCase();
-    } catch {
-        return "";
-    }
-}
-
-function validateEmployerRegistrationForm() {
-    const companyName = document.getElementById('employer-company-name')?.value.trim();
-    const officialEmail = document.getElementById('employer-official-email')?.value.trim();
-    const password = document.getElementById('employer-register-pass')?.value.trim();
-    const gstNumber = document.getElementById('employer-gst-number')?.value.trim().toUpperCase();
-    const cinNumber = document.getElementById('employer-cin-number')?.value.trim().toUpperCase();
-    const website = document.getElementById('employer-website')?.value.trim();
-    const warning = document.getElementById('employer-email-warning');
-
-    if (!companyName || !officialEmail || !password || !gstNumber || !cinNumber || !website) {
-        showToast('Please fill all employer registration fields', 'error');
-        return null;
-    }
-
-    if (!isOfficialEmail(officialEmail)) {
-        warning?.classList.remove('hidden');
-        showToast('Please use an official company email address', 'error');
-        return null;
-    }
-
-    warning?.classList.add('hidden');
-
-    if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(gstNumber)) {
-        showToast('Enter a valid 15-character GST number', 'error');
-        return null;
-    }
-
-    if (!/^[A-Z][0-9]{5}[A-Z]{2}[0-9]{4}[A-Z]{3}[0-9]{6}$/.test(cinNumber)) {
-        showToast('Enter a valid 21-character CIN number', 'error');
-        return null;
-    }
-
-    const websiteHost = normalizeWebsiteHost(website);
-    const emailDomain = getEmailDomain(officialEmail);
-
-    if (!websiteHost || (emailDomain !== websiteHost && !emailDomain.endsWith(`.${websiteHost}`))) {
-        showToast('Official email domain must match the company website', 'error');
-        return null;
-    }
-
-    return {
-        companyName,
-        officialEmail,
-        password,
-        gstNumber,
-        cinNumber,
-        website
-    };
-}
-
-async function requestEmployerRegisterOtp(isResend = false) {
-    const data = validateEmployerRegistrationForm();
-
-    if (!data) return;
-
-    const resp = await fetch(`${API_BASE_URL}/Auth/request-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: data.officialEmail, purpose: 'employer-register' })
-    });
-
-    if (!resp.ok) {
-        const t = await resp.text();
-        showToast(t || 'Could not send OTP', 'error');
-        return;
-    }
-
-    employerRegisterOtpSent = true;
-    document.getElementById('employerOtpModal').style.display = 'flex';
-    showToast(isResend ? 'OTP resent to official email' : 'OTP sent to official email', 'success');
-}
-
-async function handleEmployerRegister() {
-    const data = validateEmployerRegistrationForm();
-    const otp = document.getElementById('employer-register-otp')?.value.trim();
-
-    if (!data) return;
-
-    if (!employerRegisterOtpSent || !otp) {
-        showToast('Please enter the OTP sent to your official email', 'error');
-        return;
-    }
-
-    const resp = await fetch(`${API_BASE_URL}/Auth/register-employer`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            CompanyName: data.companyName,
-            OfficialEmail: data.officialEmail,
-            Password: data.password,
-            GstNumber: data.gstNumber,
-            CinNumber: data.cinNumber,
-            Website: data.website,
-            Otp: otp
-        })
-    });
-
-    if (!resp.ok) {
-        const t = await resp.text();
-        showToast(t || 'Employer registration failed', 'error');
-        return;
-    }
-
-    clearEmployerRegisterForm();
-    closeEmployerOtpModal();
-    showToast('Employer account created successfully', 'success');
-    showPage('login');
-}
-
-function clearEmployerRegisterForm() {
-    [
-        'employer-company-name',
-        'employer-official-email',
-        'employer-register-pass',
-        'employer-gst-number',
-        'employer-cin-number',
-        'employer-website',
-        'employer-register-otp'
-    ].forEach(id => {
-        const field = document.getElementById(id);
-        if (field) field.value = '';
-    });
-
-    employerRegisterOtpSent = false;
-    document.getElementById('employer-email-warning')?.classList.add('hidden');
-}
-
-function closeEmployerOtpModal() {
-    const modal = document.getElementById('employerOtpModal');
-    if (modal) modal.style.display = 'none';
 }
 
 /* TOAST */
@@ -1274,15 +1077,18 @@ async function findCandidates() {
         // Employer enters requirements here; matches are built from Candidate rows.
         // Employer form values
         const companyName =
-            authStorage.getItem("name") || "Verified Employer";
+            document.getElementById('emp-company')?.value.trim();
 
         const title =
             document.getElementById('emp-jobtitle')?.value.trim();
 
-        const location =
-            document.getElementById('emp-location')?.value.trim();
+        
 
-        const description = "";
+        const salary =
+            document.getElementById('emp-salary')?.value;
+
+        const description =
+            document.getElementById('emp-desc')?.value.trim();
 
         const candidateType =
             document.getElementById('emp-type')?.value;
@@ -1294,10 +1100,10 @@ async function findCandidates() {
             Skills.employer.join(",");
 
         // Validation
-        if (!title || !skills) {
+        if (!companyName || !title || !skills) {
 
             showToast(
-                "Please fill role and required skills",
+                "Please fill company, title and skills",
                 "error"
             );
 
@@ -1315,7 +1121,7 @@ async function findCandidates() {
 
             location,
 
-            salary: "",
+            salary,
 
             description,
 
@@ -1330,7 +1136,7 @@ async function findCandidates() {
 method: "POST",
 
     headers: {
-    ...getAuthHeaders({ "Content-Type": "application/json" })
+    "Content-Type": "application/json"
 },
 
 body: JSON.stringify(newJob)
@@ -1338,13 +1144,7 @@ body: JSON.stringify(newJob)
 
 // Fetch Candidates
 const response =
-    await fetch(`${API_BASE_URL}/Candidates`, {
-        headers: getAuthHeaders()
-    });
-
-if (!response.ok) {
-    throw new Error("Unable to load candidates");
-}
+    await fetch(`${API_BASE_URL}/Candidates`);
 
 const candidates =
     await response.json();
@@ -1355,8 +1155,6 @@ const requiredSkills =
         .map(skill => skill.trim().toLowerCase())
         .filter(Boolean);
 
-const preferredLocation = String(location || "").trim().toLowerCase();
-
 const filtered = candidates.filter(c => {
 
     const candidateSkills =
@@ -1365,37 +1163,12 @@ const filtered = candidates.filter(c => {
             .map(skill => skill.trim().toLowerCase())
             .filter(Boolean);
 
-    const typeMatches =
-        !candidateType ||
-        candidateType === "both" ||
-        c.candidateType === candidateType;
-
-    const experienceMatches =
-        !minExperience ||
-        Number(c.experience || 0) >= minExperience;
-
-    const skillsMatch = requiredSkills.some(requiredSkill =>
+    return requiredSkills.some(requiredSkill =>
         candidateSkills.some(candidateSkill =>
-            skillTermsMatch(requiredSkill, candidateSkill)
+            candidateSkill.includes(requiredSkill) ||
+            requiredSkill.includes(candidateSkill)
         )
     );
-
-    return typeMatches &&
-        experienceMatches &&
-        skillsMatch;
-}).sort((a, b) => {
-    if (!preferredLocation) {
-        return 0;
-    }
-
-    const aLocationMatch = String(a.location || "")
-        .toLowerCase()
-        .includes(preferredLocation);
-    const bLocationMatch = String(b.location || "")
-        .toLowerCase()
-        .includes(preferredLocation);
-
-    return Number(bLocationMatch) - Number(aLocationMatch);
 });
 
 // Render Candidates
@@ -1445,6 +1218,10 @@ function renderCandidates(list) {
 
             <div>
                 ${c.skills}
+            </div>
+
+            <div>
+                ${c.email}
             </div>
 
             <div class="verification-cards">
@@ -1518,6 +1295,13 @@ function renderCandidates(list) {
                 View Profile
 
             </button>
+            <button class="btn-primary"
+    onclick="viewVerificationDetails(${c.id})">
+
+    View Details
+
+</button>
+
         </div>
 
     `).join('');
@@ -1536,32 +1320,42 @@ function viewCandidateProfile(candidateData) {
 
         <div class="profile-info">
             <strong>Name:</strong>
-            ${escapeHtml(c.fullName || "N/A")}
+            ${c.fullName}
+        </div>
+
+        <div class="profile-info">
+            <strong>Email:</strong>
+            ${c.email}
+        </div>
+
+        <div class="profile-info">
+            <strong>Phone:</strong>
+            ${c.phone}
         </div>
 
         <div class="profile-info">
             <strong>Skills:</strong>
-            ${escapeHtml(c.skills || "N/A")}
+            ${c.skills}
         </div>
 
         <div class="profile-info">
             <strong>Experience:</strong>
-            ${escapeHtml(String(c.experience ?? "N/A"))} years
+            ${c.experience} years
         </div>
 
         <div class="profile-info">
             <strong>Location:</strong>
-            ${escapeHtml(c.location || "N/A")}
+            ${c.location}
         </div>
 
         <div class="profile-info">
             <strong>Salary:</strong>
-            ${escapeHtml(c.salary || "N/A")}
+            ${c.salary}
         </div>
 
         <div class="profile-info">
             <strong>Type:</strong>
-            ${escapeHtml(c.candidateType || "N/A")}
+            ${c.candidateType}
         </div>
     `;
 }
@@ -1599,8 +1393,7 @@ async function handleLogin() {
             });
 
             if (!response.ok) {
-                const message = await response.text();
-                throw new Error(message || "Invalid email or password");
+                throw new Error("Invalid login");
             }
 
             await requestLoginOtp();
@@ -1709,7 +1502,7 @@ function getGoogleRole() {
     const activePage = getActiveAuthPage();
 
     return activePage === 'register'
-        ? 'jobseeker'
+        ? document.getElementById('register-role')?.value
         : document.getElementById('login-google-role')?.value;
 }
 
