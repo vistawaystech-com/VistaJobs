@@ -5,7 +5,7 @@
 namespace JBP.Migrations
 {
     /// <inheritdoc />
-    public partial class initialdatabae : Migration
+    public partial class InitialDatabase : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
