@@ -63,10 +63,10 @@ async function handleRegister() {
         const name = document.getElementById('register-name')?.value.trim();
         const email = document.getElementById('register-email')?.value.trim();
         const password = document.getElementById('register-pass')?.value.trim();
-        const role = document.getElementById('register-role')?.value;
+        const role = "jobseeker";
         const otp = document.getElementById('register-otp')?.value.trim();
 
-        if (!name || !email || !password || !role) {
+        if (!name || !email || !password) {
             showToast('Please fill all fields', 'error');
             return;
         }
@@ -110,7 +110,6 @@ async function handleRegister() {
         const rn = document.getElementById('register-name'); if (rn) rn.value = '';
         const re = document.getElementById('register-email'); if (re) re.value = '';
         const rp = document.getElementById('register-pass'); if (rp) rp.value = '';
-        const rr = document.getElementById('register-role'); if (rr) rr.value = '';
         const ro = document.getElementById('register-otp'); if (ro) ro.value = '';
         const otpBlock = document.getElementById('register-otp-block'); if (otpBlock) otpBlock.style.display = 'none';
         const submit = document.getElementById('register-submit-btn'); if (submit) submit.textContent = 'Send OTP';
@@ -118,8 +117,7 @@ async function handleRegister() {
 
         showToast('Account created successfully', 'success');
         //navigate to login page after registration instead of auto-login, to avoid confusion and also because user may want to login later. This also prevents the need to persist entered credentials in the form which can be a security risk.
-        if (role === 'jobseeker') showPage('login');
-        else if (role === 'employer') showPage('login');
+        showPage('login');
 
         // Navigate to appropriate page without persisting entered credentials
         // if (role === 'jobseeker') showPage('jobseeker');
@@ -1700,7 +1698,7 @@ function getGoogleRole() {
     const activePage = getActiveAuthPage();
 
     return activePage === 'register'
-        ? document.getElementById('register-role')?.value
+        ? 'jobseeker'
         : document.getElementById('login-google-role')?.value;
 }
 

@@ -13,7 +13,7 @@ namespace JBP.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     [Migration("20260706053437_initial databae")]
-    partial class initialdatabae
+    partial class InitialDatabase
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
