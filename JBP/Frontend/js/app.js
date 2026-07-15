@@ -1,24 +1,14 @@
 'use strict';
-
-<<<<<<< HEAD
 const API_BASE_URL = "https://vistajobs-api-aqahcnabazbzf8hz.centralindia-01.azurewebsites.net/api";
-=======
-const API_BASE_URL =
-"https://vistajobs-api-aqahcnabazbzf8hz.centralindia-01.azurewebsites.net/api";
->>>>>>> 08ae54c36bce1a1b4147df1a6e559d43756c5ccd
-
 // Login state is kept only for this browser session.
 // This prevents stale user details from appearing after closing/reopening the browser.
 const authStorage = sessionStorage;
 const GOOGLE_CLIENT_ID = "280183771546-5q3kn4tsh1pt511ea9928pd01nq5ppgp.apps.googleusercontent.com";
 let registerOtpSent = false;
 let loginOtpSent = false;
-<<<<<<< HEAD
 let employerRegisterOtpSent = false;
 let resetOtpSent = false;
 let resetOtpVerified = false;
-=======
->>>>>>> 08ae54c36bce1a1b4147df1a6e559d43756c5ccd
 let googleAuthInitialized = false;
 
 function clearSavedLogin() {
