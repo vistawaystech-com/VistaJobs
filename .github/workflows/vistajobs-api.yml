@@ -1,0 +1,35 @@
+name: VistaJobs API CI/CD
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore Packages
+        run: dotnet restore ./JBP/JBP.csproj
+
+      - name: Build Application
+        run: dotnet build ./JBP/JBP.csproj --configuration Release --no-restore
+
+      - name: Publish Application
+        run: dotnet publish ./JBP/JBP.csproj --configuration Release --output ./publish
+
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: vistajobs-api
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ./publish
