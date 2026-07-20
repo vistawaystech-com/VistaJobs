@@ -1,5 +1,6 @@
 using JBP.Data;
 using JBP.Services;
+using JBP.Models;
 using JBP.Services.VerificationProviders;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -119,7 +120,29 @@ builder.Services.AddCors(options =>
     });
 });
 var app = builder.Build();
+//admin user creation on startup
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
+    if (!db.Users.Any(u => u.Role == "admin"))
+    {
+        var admin = new User
+        {
+            FullName = "Administrator",
+            Email = "karthikeya.k@vistawaystech.com",
+            Password = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
+            Role = "admin",
+            AuthProvider = "Email",
+            EmailVerified = true
+        };
+
+        db.Users.Add(admin);
+        db.SaveChanges();
+
+        Console.WriteLine("Default admin account created.");
+    }
+}
 app.UseSwagger();
 app.UseSwaggerUI();
 
