@@ -2,102 +2,97 @@ name: VistaJobs CI/CD
 
 on:
   push:
-    branches: [ dev, main ]
+    branches:
+      - dev
+      - main
   pull_request:
-    branches: [ dev, main ]
+    branches:
+      - dev
+      - main
 
 jobs:
   build:
-    name: Build & Test
+    name: Build & Publish
     runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: '8.0.x'
-    - name: Cache NuGet packages
-      uses: actions/cache@v3
-      with:
-        path: ~/.nuget/packages
-        key: ${{ runner.os }}-nuget-${{ hashFiles('**/JBP.csproj') }}
-        restore-keys: |
-          ${{ runner.os }}-nuget-
-    - name: Restore dependencies
-      run: dotnet restore JBP/JBP.csproj
-    - name: Build
-      run: dotnet build JBP/JBP.csproj --no-restore -c Release
-    - name: Build Summary
-      run: |
-        echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
-        echo "- Branch: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-        echo "- Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-        echo "- Author: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-        echo "- .NET build: Passed" >> $GITHUB_STEP_SUMMARY
 
-  docker:
-    name: Docker Build & Push to ACR
-    runs-on: ubuntu-latest
-    needs: build
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-    - name: Login to Azure Container Registry
-      if: github.ref == 'refs/heads/main'
-      uses: azure/docker-login@v1
-      with:
-        login-server: ${{ secrets.ACR_LOGIN_SERVER }}
-        username: ${{ secrets.ACR_USERNAME }}
-        password: ${{ secrets.ACR_PASSWORD }}
-    - name: Build Docker image
-      run: docker build -t vistajobs:${{ github.run_number }} -f JBP/Dockerfile .
-    - name: Tag as latest
-      run: docker tag vistajobs:${{ github.run_number }} vistajobs:latest
-    - name: Push to ACR (main branch only)
-      if: github.ref == 'refs/heads/main'
-      run: |
-        docker tag vistajobs:${{ github.run_number }} ${{ secrets.ACR_LOGIN_SERVER }}/vistajobs:${{ github.run_number }}
-        docker tag vistajobs:latest ${{ secrets.ACR_LOGIN_SERVER }}/vistajobs:latest
-        docker push ${{ secrets.ACR_LOGIN_SERVER }}/vistajobs:${{ github.run_number }}
-        docker push ${{ secrets.ACR_LOGIN_SERVER }}/vistajobs:latest
-    - name: Docker Summary
-      run: |
-        echo "## Docker Image" >> $GITHUB_STEP_SUMMARY
-        echo "- Tag: vistajobs:${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
-        echo "- Status: Built successfully" >> $GITHUB_STEP_SUMMARY
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore dependencies
+        run: dotnet restore JBP/JBP.csproj
+
+      - name: Build
+        run: dotnet build JBP/JBP.csproj --configuration Release --no-restore
+
+      - name: Publish
+        run: dotnet publish JBP/JBP.csproj --configuration Release --no-build --output ./publish
+
+      - name: Upload Publish Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app
+          path: ./publish
+
+      - name: Build Summary
+        run: |
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- Branch: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Author: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Build: Successful" >> $GITHUB_STEP_SUMMARY
 
   deploy:
     name: Deploy to Azure App Service
     runs-on: ubuntu-latest
-    needs: docker
+    needs: build
     if: github.ref == 'refs/heads/main'
+
     steps:
-    - name: Login to Azure
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-    - name: Deploy to Azure App Service
-      uses: azure/webapps-deploy@v2
-      with:
-        app-name: vistajobs-app
-        images: ${{ secrets.ACR_LOGIN_SERVER }}/vistajobs:${{ github.run_number }}
-    - name: Deployment Summary
-      run: |
-        echo "## Azure Deployment" >> $GITHUB_STEP_SUMMARY
-        echo "- App: vistajobs-app" >> $GITHUB_STEP_SUMMARY
-        echo "- Image: vistajobs:${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
-        echo "- Status: Deployed to Azure App Service" >> $GITHUB_STEP_SUMMARY
+      - name: Download Publish Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app
+          path: ./publish
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: vistajobs-app
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ./publish
+
+      - name: Deployment Summary
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- App Service: vistajobs-app" >> $GITHUB_STEP_SUMMARY
+          echo "- Environment: Production" >> $GITHUB_STEP_SUMMARY
+          echo "- Deployment: Successful" >> $GITHUB_STEP_SUMMARY
 
   notify:
     name: Notify Team
     runs-on: ubuntu-latest
-    needs: [docker, deploy]
+    needs: [build, deploy]
     if: always()
+
     steps:
-    - name: Notify testing team
-      run: |
-        echo "## Build Complete" >> $GITHUB_STEP_SUMMARY
-        echo "Build #${{ github.run_number }} finished." >> $GITHUB_STEP_SUMMARY
-        echo "Branch: ${{ github.ref_name }} | Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-        echo "Build #${{ github.run_number }} complete"
+      - name: Pipeline Summary
+        run: |
+          echo "## Pipeline Completed" >> $GITHUB_STEP_SUMMARY
+          echo "- Workflow: VistaJobs CI/CD" >> $GITHUB_STEP_SUMMARY
+          echo "- Branch: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Triggered By: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
