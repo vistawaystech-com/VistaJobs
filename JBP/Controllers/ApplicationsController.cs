@@ -6,78 +6,79 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace JBP.API.Controllers
 {
-    // Job application APIs.
-    // A candidate can apply once per job; a confirmation email is sent after save.
+    // Job application flow starts here: a logged-in candidate applies to a job once.
+    // Job application flow ikkada start avtundi: logged-in candidate oka job ki okasari apply cheyyagaladu.
     [Authorize]
-
     [ApiController]
-
     [Route("api/[controller]")]
     public class ApplicationsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
         private readonly EmailService _emailService;
 
-        public ApplicationsController(ApplicationDbContext context, EmailService emailService) { _context = context; _emailService = emailService; }    
+        public ApplicationsController(
+            ApplicationDbContext context,
+            EmailService emailService)
+        {
+            _context = context;
+            _emailService = emailService;
+        }
 
-        // Creates an application after checking duplicate candidate/job combination.
         [HttpPost]
         public IActionResult Apply(JobApplication application)
         {
             application.AppliedAt = DateTime.Now;
 
-            // Keep a copy of the job title on the application for easy dashboard display.
-            var job = _context.Jobs.FirstOrDefault(j => j.Id == application.JobId); if (job != null) { application.JobTitle = job.Title; }
+            var job = _context.Jobs.FirstOrDefault(j => j.Id == application.JobId);
 
-           var exists = _context.JobApplications.Any(a =>
+            if (job != null)
+            {
+                application.JobTitle = job.Title;
+            }
 
-    a.JobId == application.JobId &&
-
-    a.CandidateEmail ==
-        application.CandidateEmail
-);
+            var exists = _context.JobApplications.Any(a =>
+                a.JobId == application.JobId &&
+                a.CandidateEmail == application.CandidateEmail);
 
             if (exists)
             {
-                return BadRequest(
-                    "Already applied to this job"
-                );
+                return BadRequest("Already applied to this job");
             }
 
             _context.JobApplications.Add(application);
 
             _context.SaveChanges();
 
-            // Email failures will currently fail the request; handle with care in production.
+            // Application flow ends by saving the row and emailing the candidate confirmation.
+            // Application flow ikkada end avtundi: row save ayi candidate ki confirmation email vellutundi.
             _emailService.SendEmail(
-    application.CandidateEmail,
+                application.CandidateEmail,
 
-    "Job Application Submitted",
+                "Job Application Submitted",
 
-    $@"
-        <h2>Application Successful</h2>
+                $@"
+                    <h2>Application Successful</h2>
 
-        <p>Hello {application.CandidateName},</p>
+                    <p>Hello {application.CandidateName},</p>
 
-        <p>
-            Your application for
-            <strong>{application.JobTitle}</strong>
-            has been submitted successfully.
-        </p>
+                    <p>
+                        Your application for
+                        <strong>{application.JobTitle}</strong>
+                        has been submitted successfully.
+                    </p>
 
-        <p>Thank you for using Jobsy 🚀</p>
-    ").Wait();
+                    <p>Thank you for using VistaJobs.</p>
+                ").Wait();
 
-            return Ok(
-                "Application submitted successfully");
+            return Ok("Application submitted successfully");
         }
 
-        // Admin/testing endpoint for reviewing all application rows.
+        // Application review flow: admin/employer dashboards read saved applications from here.
+        // Application review flow: admin/employer dashboards ikkadi nundi saved applications chadutayi.
         [HttpGet]
         public IActionResult GetApplications()
         {
-            return Ok(
-                _context.JobApplications.ToList());
+            return Ok(_context.JobApplications.ToList());
         }
     }
 }

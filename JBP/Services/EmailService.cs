@@ -25,6 +25,13 @@ namespace JBP.Services
                 _configuration.GetSection(
                     "EmailSettings");
 
+            var fromEmail =
+                settings["Email"];
+
+            var password =
+                (settings["Password"] ?? string.Empty)
+                    .Replace(" ", string.Empty);
+
             var smtpClient = new SmtpClient(
                 settings["Host"])
             {
@@ -33,8 +40,8 @@ namespace JBP.Services
 
                 Credentials =
                     new NetworkCredential(
-                        settings["Email"],
-                        settings["Password"]),
+                        fromEmail,
+                        password),
 
                 EnableSsl = true
             };
@@ -43,7 +50,7 @@ namespace JBP.Services
             {
                 From =
                     new MailAddress(
-                        settings["Email"]!),
+                        fromEmail!),
 
                 Subject = subject,
 

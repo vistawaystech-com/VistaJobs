@@ -5,8 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace JBP.Controllers
 {
-    // Employer job APIs.
-    // Employers create jobs and view applicants; public job list is used by the home page.
+    // Job flow starts here: employers save requirements and dashboards read applicant data.
+    // Job flow ikkada start avtundi: employers requirements save chestaru, dashboards applicants chustayi.
     [Authorize(Roles = "employer")]
     [ApiController]
     [Route("api/[controller]")]
@@ -30,7 +30,8 @@ namespace JBP.Controllers
         [HttpPost]
         public IActionResult AddJob(Job job)
         {
-            // Job requirements are saved first, then frontend matches candidates by skills.
+            // Employer search/job requirement is saved before the frontend renders matching candidates.
+            // Employer search/job requirement save ayyaka frontend matching candidates chupistundi.
             _context.Jobs.Add(job);
 
             _context.SaveChanges();
@@ -39,9 +40,10 @@ namespace JBP.Controllers
         }
 
         [HttpGet("dashboard")]
-public IActionResult EmployerDashboard()
+        public IActionResult EmployerDashboard()
         {
-            // Dashboard joins jobs with application rows and candidate resume paths.
+            // Employer dashboard flow ends here by joining jobs, applications, and resume paths.
+            // Employer dashboard flow ikkada end avtundi: jobs, applications, resumes join ayi return avtayi.
             var jobs = _context.Jobs.ToList();
 
             var applications =
@@ -61,7 +63,16 @@ public IActionResult EmployerDashboard()
 
                 Applicants = applications
                     .Where(a => a.JobId == job.Id)
-                    .Select(a => new { a.CandidateName, a.CandidateEmail, a.AppliedAt, Resume = _context.Candidates.Where(c => c.Email == a.CandidateEmail).Select(c => c.ResumePath).FirstOrDefault() })
+                    .Select(a => new
+                    {
+                        a.CandidateName,
+                        a.CandidateEmail,
+                        a.AppliedAt,
+                        Resume = _context.Candidates
+                            .Where(c => c.Email == a.CandidateEmail)
+                            .Select(c => c.ResumePath)
+                            .FirstOrDefault()
+                    })
                     .ToList()
             });
 

@@ -27,8 +27,6 @@
 
             <!-- Desktop nav -->
             <div class="nav-links">
-                <!--<button class="nav-link" data-page="jobseeker" onclick="showPage('jobseeker')">Jobseeker</button>
-                <button class="nav-link" data-page="employer" onclick="showPage('employer')">Employer</button>-->
                 <button id="registerBtn" class="nav-link btn-Register" data-page="register" onclick="showPage('register')">Register</button>
                 <button id="loginBtn" class="nav-link btn-login" data-page="login" onclick="showPage('login')">Login</button>
                 <div id="user-area" class="user-area" style="display:none;"> <span id="welcome-user"></span> <button id="logout-btn" class="btn-secondary" > Logout </button> </div>
@@ -45,8 +43,6 @@
     <div class="nav-mobile" id="navMobile">
         <button class="nav-link" onclick="showPage('home')">🏠 Home</button>
         <button class="nav-link" onclick="showPage('register')">Register</button>
-        <!--<button class="nav-link" onclick="showPage('jobseeker')">👤 Jobseeker</button>
-        <button class="nav-link" onclick="showPage('employer')">🏢 Employer</button>-->
         <button class="nav-link" onclick="showPage('login')">🔐 Login</button>
     </div>
 
@@ -60,45 +56,10 @@
             <div class="hero-badge">🚀 2026's Most Trusted Job Portal</div>
             <h1>Elevate Your<br><span class="accent">Career Path</span></h1>
             <p>Discover opportunities from top companies around the world and find talent that fits perfectly.</p>
-            <!--<div class="search-box">
-                <input type="text" id="searchJob" placeholder="Search jobs, skills, companies…" />
-                <input type="text" id="searchLoc" placeholder="Location" style="max-width:200px;" />
-                <button class="btn-search" onclick="handleSearch()">🔍 Search</button>
-            </div>-->
         </section>
 
         <!-- Stats -->
-        <!--<div class="stats-row">
-            <div class="stats-inner">
-                <div class="stat"><div class="stat-num">12,400+</div><div class="stat-label">Active Jobs</div></div>
-                <div class="stat"><div class="stat-num">3,200+</div><div class="stat-label">Companies</div></div>
-                <div class="stat"><div class="stat-num">98K+</div><div class="stat-label">Candidates</div></div>
-                <div class="stat"><div class="stat-num">4.8★</div><div class="stat-label">Avg Rating</div></div>
-            </div>
-        </div>-->
         <!-- Jobs Section -->
-        <!--<div class="section">
-            <div class="container">
-                <div class="section-header">
-                    <h2 class="section-title" id="sectionTitle">Featured Jobs</h2>
-                    <span class="section-link" onclick="showPage('jobseeker')">Post your profile →</span>
-                </div>-->
-        <!-- Category filter -->
-        <!--<div class="categories">
-            <button class="cat-pill active" onclick="filterCategory(this,'all')">All</button>
-            <button class="cat-pill" onclick="filterCategory(this,'react')">Frontend</button>
-            <button class="cat-pill" onclick="filterCategory(this,'node')">Backend</button>
-            <button class="cat-pill" onclick="filterCategory(this,'python')">Data / AI</button>
-            <button class="cat-pill" onclick="filterCategory(this,'devops')">DevOps</button>
-            <button class="cat-pill" onclick="filterCategory(this,'figma')">Design</button>
-            <button class="cat-pill" onclick="filterCategory(this,'marketing')">Marketing</button>
-        </div>
-
-        <div class="jobs-grid" id="jobsGrid">-->
-        <!-- Rendered by JS -->
-        <!--</div>
-            </div>
-        </div>-->
 
         <section class="home-links" aria-labelledby="home-links-title">
             <div class="container">
@@ -439,50 +400,6 @@
                     🚀 Submit My Profile
                 </button>
             </div><!-- /form-card -->
-            <!--<div class="dashboard-section">
-
-                <h2>Candidate Dashboard</h2>-->
-            <!-- PROFILE -->
-            <!--<div class="dashboard-card">
-
-                <h3>Profile</h3>
-
-                <div id="candidate-profile">
-
-                    Loading profile...
-
-                </div>
-            </div>-->
-            <!-- RESUME -->
-            <!--<div class="dashboard-card">
-
-                <h3>Upload Resume</h3>
-
-                <input type="file"
-                       id="resume-file"
-                       accept=".pdf">
-
-                <button class="btn-primary"
-                        onclick="uploadResume()">
-
-                    Upload Resume
-
-                </button>
-
-                <div id="resume-status"></div>
-            </div>-->
-            <!-- APPLICATIONS -->
-            <!--<div class="dashboard-card">
-
-                    <h3>Applied Jobs</h3>
-
-                    <div id="applied-jobs">
-
-                        No applications yet
-
-                    </div>
-                </div>
-            </div>-->
         </div><!-- /form-page -->
     </div><!-- /page-jobseeker -->
     <!-- ═══════════════════════════════════════
@@ -678,14 +595,6 @@
                         <button class="toggle-pass" type="button" onclick="togglePassword('register-pass')" title="Toggle password">👁</button>
                     </div>
                 </div>
-                <!--<div class="form-group google-role-group">
-                    <label for="login-google-role">Role for new Google accounts</label>
-                    <select id="login-google-role" class="form-control">
-                        <option value="">Select Role</option>
-                        <option value="jobseeker">Job Seeker</option>
-                        <option value="Employer">Employer</option>
-                    </select>
-                </div>-->
                 <div style="margin-top:1.25rem;">
                     <button id="register-submit-btn" class="btn-submit" onclick="handleRegister()">Send OTP</button>
                 </div>
@@ -700,10 +609,6 @@
                     Already have an account?
                     <a onclick="showPage('login')" style="font-weight:600;">Sign in</a>
                 </div>
-                <!--after register it should automatically clear the form-->
-                <!--<div class="form-page">
-
-    </div>-->
             </div>
         </div>
     </div>
@@ -769,7 +674,6 @@
                 <!-- Role toggle -->
                 <div class="role-toggle">
                     <button class="role-btn active" onclick="selectRole(this,'jobseeker/Employer')">👤 Jobseeker/🏢 Employer</button>
-                    <!--<button class="role-btn" onclick="selectRole(this,'employer')">🏢 Employer</button>-->
                 </div>
 
                 <div class="form-group">
@@ -795,30 +699,12 @@
                 </button>
 
                 <div class="auth-divider"><span>or</span></div>
-                <!--<div class="form-group google-role-group">
-                    <label for="login-google-role">Role for new Google accounts</label>
-                    <select id="login-google-role" class="form-control">
-                        <option value="">Select Role</option>
-                        <option value="jobseeker">Job Seeker</option>
-                    </select>
-                </div>-->
                 <div id="google-login-btn" class="google-auth-slot"></div>
 
                 <div class="login-footer">
                     Don't have an account?
                     <a onclick="showPage('register')">Register </a>
-                    <!--&nbsp;|&nbsp;
-                    <a onclick="showPage('employer')">Register </a>-->
                 </div>
-
-            
-                <!--<div style="margin-top:1.5rem;padding:1rem;background:var(--gray-50);border-radius:10px;border:1px solid var(--gray-200);">
-                    <p style="font-size:.8rem;color:var(--gray-500);text-align:center;line-height:1.7;">-->
-                        <!--<strong>Demo Credentials</strong><br />
-                        Jobseeker: jobseeker@demo.com / demo123<br />
-                        Employer: employer@demo.com / demo123-->
-                    <!--</p>-->
-                <!--</div>-->
             </div>
         </div>
     </div><!-- /page-login -->

@@ -9,8 +9,8 @@ using JBP.Models;
 
 namespace JBP.Controllers
 {
-    // Candidate profile APIs.
-    // Jobseekers create/update one profile by email, employers read candidates for matching.
+    // Candidate profile flow starts here: jobseekers save profiles and employers read safe match summaries.
+    // Candidate profile flow ikkada start avtundi: jobseekers profiles save chestaru, employers safe summaries chustaru.
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
@@ -26,7 +26,8 @@ namespace JBP.Controllers
         [HttpGet]
         public IActionResult GetCandidates()
         {
-            // Used by employer matching screen to compare job skills with candidate skills.
+            // Employer matching read flow returns only non-sensitive candidate fields.
+            // Employer matching read flow sensitive details kakunda safe candidate fields matrame return chestundi.
             return Ok(_context.Candidates
                 .Select(candidate => ToEmployerCandidateDto(candidate))
                 .ToList());
@@ -50,8 +51,8 @@ namespace JBP.Controllers
         [HttpPost]
         public IActionResult AddCandidate(Candidate candidate)
         {
-            // Logged-in jobseeker email is the profile key.
-            // If the row exists, update it instead of creating duplicate profiles.
+            // Profile save uses the JWT email as the unique key and updates an existing row if present.
+            // Profile save JWT email ni key ga use chesi existing row unte update chestundi.
             var email =
                 User.FindFirst(ClaimTypes.Email)?.Value ??
                 User.Claims.FirstOrDefault(c => c.Type == "email")?.Value ??
@@ -70,6 +71,31 @@ namespace JBP.Controllers
             var existing =
                 _context.Candidates
                     .FirstOrDefault(c => c.Email == email);
+            if (existing == null)
+            {
+                return BadRequest(new
+                {
+                    message = "Complete Aadhaar and PAN verification before saving profile."
+                });
+            }
+
+            if (!existing.AadhaarVerified ||
+                string.IsNullOrWhiteSpace(existing.AadhaarNumber))
+            {
+                return BadRequest(new
+                {
+                    message = "Aadhaar verification required."
+                });
+            }
+
+            if (!existing.PanVerified ||
+                string.IsNullOrWhiteSpace(existing.PanNumber))
+            {
+                return BadRequest(new
+                {
+                    message = "PAN verification required."
+                });
+            }
 
             candidate.AadhaarNumber =
                 string.IsNullOrWhiteSpace(candidate.AadhaarNumber)
@@ -114,21 +140,14 @@ namespace JBP.Controllers
 
             if (existing == null)
             {
-                // First profile submission for this jobseeker.
                 _context.Candidates.Add(candidate);
             }
             else
             {
-                // Profile resubmission/edit keeps the same candidate id and replaces details.
                 existing.FullName = candidate.FullName;
                 existing.Phone = candidate.Phone;
                 existing.Dob = candidate.Dob;
-                existing.AadhaarVerified = candidate.AadhaarVerified;
-                existing.PanVerified = candidate.PanVerified;
-                existing.UanVerified = candidate.UanVerified;
-                existing.PanNumber = candidate.PanNumber;
-                existing.AadhaarNumber = candidate.AadhaarNumber;
-                existing.UanNumber = candidate.UanNumber;
+                
                 existing.EmploymentHistory = candidate.EmploymentHistory;
                 existing.Experience = candidate.Experience;
                 existing.Skills = candidate.Skills;
@@ -146,6 +165,8 @@ namespace JBP.Controllers
 
             _context.SaveChanges();
 
+            // Profile save ends by refreshing structured employment-history rows for UAN-backed history.
+            // Profile save ikkada end avtundi: UAN employment history rows refresh avtayi.
             SaveEmploymentHistoryRows(candidate);
 
             _context.SaveChanges();
@@ -219,7 +240,8 @@ namespace JBP.Controllers
      IFormFile file)
 
         {
-            // Resume upload is linked to the candidate id returned after profile save.
+            // Resume upload flow links the selected document to the candidate id returned after profile save.
+            // Resume upload flow selected document ni profile save taruvata candidate id ki attach chestundi.
             var candidate =
                 _context.Candidates.FirstOrDefault(
                     c => c.Id == id);
@@ -251,7 +273,8 @@ namespace JBP.Controllers
                 });
             }
 
-            // Prefix with a GUID so two users can upload files with the same original name.
+            // Resume upload ends by storing only the public URL path, not the physical server path.
+            // Resume upload ikkada end avtundi: public URL path matrame save avtundi, server physical path kaadu.
             var fileName =
                 $"{Guid.NewGuid()}_{Path.GetFileName(file.FileName)}";
 
@@ -276,7 +299,6 @@ namespace JBP.Controllers
                 await file.CopyToAsync(stream);
             }
 
-            // Store the public path only. The physical path stays on the server.
             candidate.ResumePath =
                 $"/Uploads/{fileName}";
 
@@ -298,8 +320,8 @@ namespace JBP.Controllers
         [HttpGet("my-profile")]
         public IActionResult MyProfile()
         {
-            // Frontend uses this on jobseeker login:
-            // 200 = show submitted profile, 404 = show fresher/experienced chooser.
+            // My-profile flow lets the frontend decide between submitted-summary and new-profile form.
+            // My-profile flow frontend ki submitted summary leka new profile form decide cheyyadaniki use avtundi.
             var email =
                 User.FindFirst(ClaimTypes.Email)?.Value ??
                 User.Claims.FirstOrDefault(c => c.Type == "email")?.Value;
