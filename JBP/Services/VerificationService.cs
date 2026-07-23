@@ -64,15 +64,19 @@ namespace JBP.Services
                 return VerificationStartResult.Redirect(digiLocker.RedirectUrl, digiLocker.Message);
             }
 
-            if (candidate != null)
-            {
-                candidate.AadhaarVerified = true;
-                candidate.AadhaarNumber = number;
-                SaveLog(candidate, "aadhaar", "Local", "verified", new { number });
-                _context.SaveChanges();
-            }
+            SaveLog(
+      candidate,
+      "aadhaar",
+      "DigiLocker",
+      "verification_unavailable",
+      new { number }
+  );
 
-            return VerificationStartResult.Completed("Aadhaar verified");
+            _context.SaveChanges();
+
+            return VerificationStartResult.Failed(
+                "Aadhaar verification service is currently unavailable"
+            );
         }
 
         public VerificationStartResult VerifyPan(
@@ -109,15 +113,19 @@ namespace JBP.Services
                 return VerificationStartResult.Redirect(digiLocker.RedirectUrl, digiLocker.Message);
             }
 
-            if (candidate != null)
-            {
-                candidate.PanVerified = true;
-                candidate.PanNumber = normalizedPan;
-                SaveLog(candidate, "pan", "Local", "verified", new { number = normalizedPan });
-                _context.SaveChanges();
-            }
+            SaveLog(
+    candidate,
+    "pan",
+    "DigiLocker",
+    "verification_unavailable",
+    new { number = normalizedPan }
+);
 
-            return VerificationStartResult.Completed("PAN verified");
+            _context.SaveChanges();
+
+            return VerificationStartResult.Failed(
+                "PAN verification service is currently unavailable"
+            );
         }
 
         public async Task<UanVerificationResult> VerifyUanAsync(

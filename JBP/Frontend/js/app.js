@@ -1683,6 +1683,20 @@ function setButtonLoading(buttonId, isLoading, loadingText, defaultText) {
     button.textContent = isLoading ? loadingText : defaultText;
 }
 
+async function readAuthResponse(response) {
+    const text = await response.text();
+
+    if (!text) {
+        return {};
+    }
+
+    try {
+        return JSON.parse(text);
+    } catch {
+        return { text, message: text };
+    }
+}
+
 function resetPasswordFormState(clearEmail = false) {
     if (clearEmail) {
         const email = document.getElementById('reset-email');
@@ -1737,8 +1751,10 @@ async function sendResetOtp(isResend = false) {
             body: JSON.stringify({ email })
         });
 
+        const responseBody = await readAuthResponse(response);
+
         if (!response.ok) {
-            const message = await response.text();
+            const message = responseBody.message || responseBody.text;
             throw new Error(message || 'Could not send OTP');
         }
 
@@ -1756,7 +1772,11 @@ async function sendResetOtp(isResend = false) {
             if (field) field.value = '';
         });
 
-        showToast(isResend ? 'OTP sent successfully.' : 'OTP sent successfully.', 'success');
+        const successMessage = responseBody.developmentOtp
+            ? `OTP sent successfully. Development OTP: ${responseBody.developmentOtp}`
+            : 'OTP sent successfully.';
+
+        showToast(successMessage, 'success');
     } catch (error) {
         console.error(error);
         showToast(error.message || 'Could not send OTP', 'error');

@@ -24,17 +24,20 @@ namespace Jobsy.API.Controllers
         private readonly IConfiguration _configuration;
         private readonly EmailService _emailService;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IWebHostEnvironment _environment;
 
         public AuthController(
             ApplicationDbContext context,
             IConfiguration configuration,
             EmailService emailService,
-            IHttpClientFactory httpClientFactory)
+            IHttpClientFactory httpClientFactory,
+            IWebHostEnvironment environment)
         {
             _context = context;
             _configuration = configuration;
             _emailService = emailService;
             _httpClientFactory = httpClientFactory;
+            _environment = environment;
         }
 
         [HttpPost("request-otp")]
@@ -117,10 +120,26 @@ namespace Jobsy.API.Controllers
 
             await _context.SaveChangesAsync();
 
-            await _emailService.SendEmail(
-                email,
-                "Your VistaJobs password reset OTP",
-                $"<p>Your VistaJobs password reset OTP is <strong>{code}</strong>.</p><p>This code expires in 5 minutes.</p>");
+            try
+            {
+                await _emailService.SendEmail(
+                    email,
+                    "Your VistaJobs password reset OTP",
+                    $"<p>Your VistaJobs password reset OTP is <strong>{code}</strong>.</p><p>This code expires in 5 minutes.</p>");
+            }
+            catch
+            {
+                if (!_environment.IsDevelopment())
+                {
+                    return StatusCode(503, "Unable to send OTP email. Please try again later.");
+                }
+
+                return Ok(new
+                {
+                    message = "OTP sent successfully.",
+                    developmentOtp = code
+                });
+            }
 
             return Ok("OTP sent successfully.");
         }
