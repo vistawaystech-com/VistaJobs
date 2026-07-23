@@ -1,9 +1,22 @@
 'use strict';
-const API_BASE_URL = "https://vistajobs-api-aqahcnabazbzf8hz.centralindia-01.azurewebsites.net/api";
+// API routing: local frontend uses the local Visual Studio API; deployed frontend uses Azure API.
+// API routing: local frontend local API ni vadutundi; deployed frontend Azure API ni vadutundi.
+const LOCAL_API_BASE_URL = "https://localhost:7250/api";
+const AZURE_API_BASE_URL = "https://vistajobs-api-aqahcnabazbzf8hz.centralindia-01.azurewebsites.net/api";
+const API_BASE_URL =
+    ["localhost", "127.0.0.1"].includes(window.location.hostname)
+        ? LOCAL_API_BASE_URL
+        : AZURE_API_BASE_URL;
 // Login state is kept only for this browser session.
 // This prevents stale user details from appearing after closing/reopening the browser.
 const authStorage = sessionStorage;
 const GOOGLE_CLIENT_ID = "280183771546-5q3kn4tsh1pt511ea9928pd01nq5ppgp.apps.googleusercontent.com";
+// Google flow: initialize only on origins configured in the Google OAuth client.
+// Google flow: Google OAuth client lo allow chesina origins lo matrame button start avuthundi.
+const GOOGLE_AUTH_ALLOWED_ORIGINS = [
+    "http://127.0.0.1:5500",
+    "http://localhost:5500"
+];
 let registerOtpSent = false;
 let loginOtpSent = false;
 let employerRegisterOtpSent = false;
@@ -1544,6 +1557,26 @@ function getGoogleRole() {
     return 'jobseeker';
 }
 
+function isGoogleAuthOriginAllowed() {
+    return GOOGLE_AUTH_ALLOWED_ORIGINS.includes(window.location.origin);
+}
+
+function hideGoogleAuthButtons() {
+    ['google-register-btn', 'google-login-btn'].forEach(id => {
+        const target = document.getElementById(id);
+
+        if (target) {
+            target.innerHTML = '';
+            target.style.display = 'none';
+
+            const divider = target.previousElementSibling;
+            if (divider?.classList.contains('auth-divider')) {
+                divider.style.display = 'none';
+            }
+        }
+    });
+}
+
 async function handleGoogleCredential(response) {
     try {
         const role = getGoogleRole();
@@ -1577,6 +1610,11 @@ async function handleGoogleCredential(response) {
 }
 
 function initGoogleAuthButtons() {
+    if (!isGoogleAuthOriginAllowed()) {
+        hideGoogleAuthButtons();
+        return;
+    }
+
     if (!window.google?.accounts?.id) {
         return;
     }
