@@ -8,8 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace JBP.Controllers
 {
-    // Verification APIs update the logged-in candidate's document status.
-    // DigiLocker can be enabled later; when disabled, this project marks valid numbers as verified locally.
+    // Verification flow starts here: each endpoint updates the logged-in candidate's identity status.
+    // Verification flow ikkada start avtundi: logged-in candidate Aadhaar/PAN/UAN status update avtundi.
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
@@ -47,6 +47,8 @@ namespace JBP.Controllers
         public IActionResult VerifyAadhaar(
     [FromBody] VerificationRequest model)
         {
+            // Aadhaar verification begins on the frontend button and ends here with a verified/redirect response.
+            // Aadhaar verification frontend button nundi start ayi ikkada verified/redirect response tho end avtundi.
             var candidate = GetCurrentCandidate();
             var email = candidate?.Email
                 ?? User.FindFirst(ClaimTypes.Email)?.Value
@@ -80,6 +82,8 @@ namespace JBP.Controllers
         public IActionResult VerifyPan(
     [FromBody] VerificationRequest model)
         {
+            // PAN verification shares the same service path as Aadhaar and returns the saved verification state.
+            // PAN verification Aadhaar laga same service path use chesi saved status return chestundi.
             var candidate = GetCurrentCandidate();
             var email = candidate?.Email
                 ?? User.FindFirst(ClaimTypes.Email)?.Value
@@ -113,6 +117,8 @@ namespace JBP.Controllers
         public async Task<IActionResult> VerifyUan(
      [FromBody] VerificationRequest model)
         {
+            // UAN verification calls the EPFO provider and returns employment history for experienced candidates.
+            // UAN verification EPFO provider ni call chesi experienced candidates employment history return chestundi.
             var candidate = GetCurrentCandidate();
             var number = model.Number ?? string.Empty;
             var result =
@@ -145,33 +151,11 @@ namespace JBP.Controllers
                 employmentHistory = result.EmploymentHistory
             });
         }
-        // [HttpPost("verify-uan")]
-        // public async Task<IActionResult> VerifyUan(
-        //[FromBody] VerificationRequest model)
-        // {
-        //     try
-        //     {
-        //         var candidate = GetCurrentCandidate();
-
-        //         var number = model.Number ?? string.Empty;
-
-        //         var result =
-        //             await _verificationService.VerifyUanAsync(
-        //                 candidate,
-        //                 number,
-        //                 HttpContext.RequestAborted);
-
-        //         return Ok(result);
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return StatusCode(500, ex.ToString());
-        //     }
-        // }
         [HttpGet("candidate-verification")]
         public IActionResult GetVerificationDetails()
         {
-            // Frontend calls this to fill document numbers and disable verified buttons.
+            // Verification sync ends here: the frontend reloads saved numbers and disables completed buttons.
+            // Verification sync ikkada end avtundi: saved numbers load ayi completed buttons disable avtayi.
             var candidate = GetCurrentCandidate();
 
             if (candidate == null)

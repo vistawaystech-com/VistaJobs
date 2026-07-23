@@ -14,8 +14,8 @@ using System.Text.Json.Serialization;
 
 namespace Jobsy.API.Controllers
 {
-    // Handles account creation and login.
-    // Successful login returns a JWT plus display details used by the frontend navbar.
+    // Authentication flow starts here: OTP, registration, login, Google auth, and password reset are handled here.
+    // Authentication flow ikkada start avtundi: OTP, registration, login, Google auth, password reset ikkade handle avtayi.
     [ApiController]
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
@@ -40,6 +40,8 @@ namespace Jobsy.API.Controllers
         [HttpPost("request-otp")]
         public async Task<IActionResult> RequestOtp(OtpRequestDto dto)
         {
+            // OTP flow creates a short-lived hashed code for register, employer-register, or login.
+            // OTP flow register/employer-register/login kosam short-lived hashed code create chestundi.
             var email = NormalizeEmail(dto.Email);
             var purpose = NormalizePurpose(dto.Purpose);
 
@@ -197,6 +199,8 @@ namespace Jobsy.API.Controllers
         [HttpPost("register")]
         public IActionResult Register(RegisterDto dto)
         {
+            // Jobseeker registration flow ends here after OTP verification and BCrypt password storage.
+            // Jobseeker registration flow OTP verify ayi BCrypt password save ayyaka ikkada end avtundi.
             dto.Email = NormalizeEmail(dto.Email);
 
             var exists = _context.Users.Any(u => u.Email == dto.Email);
@@ -238,6 +242,8 @@ namespace Jobsy.API.Controllers
         [HttpPost("register-employer")]
         public IActionResult RegisterEmployer(EmployerRegisterDto dto)
         {
+            // Employer registration flow validates company identity fields before creating an employer login.
+            // Employer registration flow company fields validate chesi employer login create chestundi.
             var email = NormalizeEmail(dto.OfficialEmail);
 
             if (string.IsNullOrWhiteSpace(dto.CompanyName) ||
@@ -313,6 +319,8 @@ namespace Jobsy.API.Controllers
                 Website = NormalizeWebsite(dto.Website)
             });
 
+            // Employer registration ends by storing the verified company profile linked to the user row.
+            // Employer registration ikkada end avtundi: verified company profile user row ki link ayi save avtundi.
             _context.SaveChanges();
 
             return Ok("Employer registered successfully");
@@ -322,6 +330,8 @@ namespace Jobsy.API.Controllers
         [HttpPost("login")]
         public IActionResult Login(LoginDto dto)
         {
+            // Login starts with password validation; OTP is requested only after password is correct.
+            // Login first password validate chestundi; password correct ayyaka matrame OTP request avtundi.
             dto.Email = NormalizeEmail(dto.Email);
 
             var user = _context.Users.FirstOrDefault(u => u.Email == dto.Email);
@@ -346,6 +356,8 @@ namespace Jobsy.API.Controllers
         [HttpPost("verify-login-otp")]
         public IActionResult VerifyLoginOtp(LoginOtpVerifyDto dto)
         {
+            // Login ends here: OTP is verified and a JWT with role claims is returned.
+            // Login ikkada end avtundi: OTP verify ayi role claims unna JWT return avtundi.
             dto.Email = NormalizeEmail(dto.Email);
 
             var user = _context.Users.FirstOrDefault(u => u.Email == dto.Email);
