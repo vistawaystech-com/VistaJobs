@@ -70,6 +70,31 @@ namespace JBP.Controllers
             var existing =
                 _context.Candidates
                     .FirstOrDefault(c => c.Email == email);
+            if (existing == null)
+            {
+                return BadRequest(new
+                {
+                    message = "Complete Aadhaar and PAN verification before saving profile."
+                });
+            }
+
+            if (!existing.AadhaarVerified ||
+                string.IsNullOrWhiteSpace(existing.AadhaarNumber))
+            {
+                return BadRequest(new
+                {
+                    message = "Aadhaar verification required."
+                });
+            }
+
+            if (!existing.PanVerified ||
+                string.IsNullOrWhiteSpace(existing.PanNumber))
+            {
+                return BadRequest(new
+                {
+                    message = "PAN verification required."
+                });
+            }
 
             candidate.AadhaarNumber =
                 string.IsNullOrWhiteSpace(candidate.AadhaarNumber)
@@ -123,12 +148,7 @@ namespace JBP.Controllers
                 existing.FullName = candidate.FullName;
                 existing.Phone = candidate.Phone;
                 existing.Dob = candidate.Dob;
-                existing.AadhaarVerified = candidate.AadhaarVerified;
-                existing.PanVerified = candidate.PanVerified;
-                existing.UanVerified = candidate.UanVerified;
-                existing.PanNumber = candidate.PanNumber;
-                existing.AadhaarNumber = candidate.AadhaarNumber;
-                existing.UanNumber = candidate.UanNumber;
+                
                 existing.EmploymentHistory = candidate.EmploymentHistory;
                 existing.Experience = candidate.Experience;
                 existing.Skills = candidate.Skills;

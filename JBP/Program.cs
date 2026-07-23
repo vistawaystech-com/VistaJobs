@@ -3,9 +3,10 @@ using JBP.Services;
 using JBP.Models;
 using JBP.Services.VerificationProviders;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
@@ -14,6 +15,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 // API controllers are used by the static frontend and Swagger UI.
 builder.Services.AddControllers();
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("otp", option =>
+    {
+        option.PermitLimit = 5;
+        option.Window = TimeSpan.FromMinutes(1);
+    });
+});
 
 // Shared services used by application and verification flows.
 builder.Services.AddScoped<EmailService>();
@@ -41,6 +50,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 ValidateLifetime = true,
 
                 ValidateIssuerSigningKey = true,
+
+                ClockSkew = TimeSpan.Zero,
+                
 
                 ValidIssuer =
                     builder.Configuration["Jwt:Issuer"],
@@ -125,28 +137,20 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-    if (!db.Users.Any(u => u.Role == "admin"))
-    {
-        var admin = new User
-        {
-            FullName = "Administrator",
-            Email = "karthikeya.k@vistawaystech.com",
-            Password = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
-            Role = "admin",
-            AuthProvider = "Email",
-            EmailVerified = true
-        };
-
-        db.Users.Add(admin);
-        db.SaveChanges();
-
-        Console.WriteLine("Default admin account created.");
-    }
-}
 app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+
+    await next();
+});
+
+
 
 // Resume uploads are stored outside the frontend folder and exposed as /Uploads/<file>.
 var uploadsPath =
@@ -155,6 +159,7 @@ var uploadsPath =
 Directory.CreateDirectory(uploadsPath);
 
 app.UseStaticFiles();
+
 
 app.UseStaticFiles(new StaticFileOptions
 {
