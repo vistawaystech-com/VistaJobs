@@ -351,25 +351,32 @@ namespace Jobsy.API.Controllers
         {
             // Login starts with password validation; OTP is requested only after password is correct.
             // Login first password validate chestundi; password correct ayyaka matrame OTP request avtundi.
-            dto.Email = NormalizeEmail(dto.Email);
-
-            var user = _context.Users.FirstOrDefault(u => u.Email == dto.Email);
-
-            if (user == null || string.IsNullOrWhiteSpace(user.Password))
+            try
             {
-                return Unauthorized("Invalid email or password");
+                dto.Email = NormalizeEmail(dto.Email);
+
+                var user = _context.Users.FirstOrDefault(u => u.Email == dto.Email);
+
+                if (user == null || string.IsNullOrWhiteSpace(user.Password))
+                {
+                    return Unauthorized("Invalid email or password");
+                }
+
+                if (!VerifyStoredPassword(user, dto.Password))
+                {
+                    return Unauthorized("Invalid email or password");
+                }
+
+                return Ok(new
+                {
+                    requiresOtp = true,
+                    message = "Password verified. Please enter the OTP sent to your email."
+                });
             }
-
-            if (!VerifyStoredPassword(user, dto.Password))
+            catch
             {
-                return Unauthorized("Invalid email or password");
+                return StatusCode(503, "Login service is temporarily unavailable. Please check the API database/settings and try again.");
             }
-
-            return Ok(new
-            {
-                requiresOtp = true,
-                message = "Password verified. Please enter the OTP sent to your email."
-            });
         }
 
         [HttpPost("verify-login-otp")]
@@ -469,9 +476,10 @@ namespace Jobsy.API.Controllers
                 new Claim(ClaimTypes.Role, user.Role)
             };
 
-            // Token signing key must match Jwt:Key in appsettings.
+            // Token signing key must match the API authentication middleware key.
+            // Token signing key API authentication middleware key tho same ga undali.
             var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
+                Encoding.UTF8.GetBytes(ResolveJwtSigningKey()));
 
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
@@ -492,6 +500,23 @@ namespace Jobsy.API.Controllers
                 role = user.Role,
                 email = user.Email
             };
+        }
+
+        private string ResolveJwtSigningKey()
+        {
+            // JWT key flow: read the same key loaded from user-secrets or hosting settings.
+            // JWT key flow: user-secrets/hosting settings nundi load ayina same key ni read chestundi.
+            var configuredKey = _configuration["Jwt:Key"];
+
+            if (!string.IsNullOrWhiteSpace(configuredKey))
+            {
+                return configuredKey;
+            }
+
+            throw new InvalidOperationException(
+                _environment.IsDevelopment()
+                    ? "Jwt:Key is not configured. Add it to this project's user-secrets secrets.json."
+                    : "Jwt:Key is not configured. Set Jwt__Key in Azure App Service configuration.");
         }
 
         private bool VerifyStoredPassword(User user, string password)

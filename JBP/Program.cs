@@ -12,6 +12,16 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+const string FrontendCorsPolicy = "VistaJobsFrontend";
+
+if (builder.Environment.IsDevelopment())
+{
+    // Local secrets flow: load values from %APPDATA%\Microsoft\UserSecrets\<UserSecretsId>\secrets.json.
+    // Local secrets flow: secret.json lo unna local values ikkada app configuration loki load avtayi.
+    builder.Configuration.AddUserSecrets<Program>(optional: true, reloadOnChange: true);
+}
+
+var jwtSigningKey = ResolveJwtSigningKey(builder.Configuration, builder.Environment);
 
 // API controllers are used by the static frontend and Swagger UI.
 builder.Services.AddControllers();
@@ -62,9 +72,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
                 IssuerSigningKey =
                     new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(
-                            builder.Configuration["Jwt:Key"]!
-                        ))
+                        Encoding.UTF8.GetBytes(jwtSigningKey))
             };
     });
 
@@ -115,27 +123,67 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Frontend runs from localhost during development, so API allows local browser calls.
+// CORS flow: allow the static frontend to call this API from local dev and Azure Static Apps.
+// CORS flow: local frontend mariyu Azure Static Apps nundi API calls allow chestundi.
+var configuredFrontendOrigins =
+    builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+    ?? Array.Empty<string>();
+
+var allowedFrontendOrigins =
+    new[]
+    {
+        "http://127.0.0.1:5500",
+        "http://localhost:5500",
+        "https://thankful-rock-0c403ba00.7.azurestaticapps.net"
+    }
+    .Concat(configuredFrontendOrigins)
+    .Where(origin => !string.IsNullOrWhiteSpace(origin))
+    .Select(origin => origin.Trim().TrimEnd('/'))
+    .Distinct(StringComparer.OrdinalIgnoreCase)
+    .ToArray();
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
+    options.AddPolicy(FrontendCorsPolicy, policy =>
     {
         policy
-            .WithOrigins(
-                "http://127.0.0.1:5500",
-                "http://localhost:5500",
-                "https://thankful-rock-0c403ba00.7.azurestaticapps.net"
-            )
+            .WithOrigins(allowedFrontendOrigins)
             .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
+            .AllowAnyMethod();
     });
 });
 var app = builder.Build();
 
+// Error/CORS safety net: even failed API responses must be readable by the allowed frontend.
+// Error/CORS safety net: API lo error vachina frontend ki readable response ravadaniki headers add chestundi.
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (Exception exception)
+    {
+        app.Logger.LogError(exception, "Unhandled API error");
+
+        if (!context.Response.HasStarted)
+        {
+            ApplyFrontendCorsHeaders(context, allowedFrontendOrigins);
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsJsonAsync(new
+            {
+                message = "Server error occurred. Please check API logs and configuration."
+            });
+        }
+    }
+});
+
 // Configure middleware and endpoints (outside any DI scope)
 app.UseSwagger();
 app.UseSwaggerUI();
+
+app.UseCors(FrontendCorsPolicy);
 
 app.UseHttpsRedirection();
 app.Use(async (context, next) =>
@@ -163,8 +211,6 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/Uploads"
 });
 
-app.UseCors("AllowFrontend");
-
 app.UseAuthentication();
 
 app.UseAuthorization();
@@ -183,7 +229,89 @@ app.MapGet("/__migrations", async (ApplicationDbContext db) =>
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    // perform admin user creation / seeding here
+
+    // Admin seed flow: ensure the default administrator can always log in after startup.
+    // Admin seed flow: app start ayyaka default admin login ready ga undela create/update chestundi.
+    const string adminEmail = "karthikeya.k@vistawaystech.com";
+    const string adminPassword = "Admin@123";
+
+    var admin =
+        db.Users.FirstOrDefault(u => u.Email == adminEmail);
+
+    if (admin == null)
+    {
+        admin = new User
+        {
+            FullName = "Administrator",
+            Email = adminEmail,
+            Password = BCrypt.Net.BCrypt.HashPassword(adminPassword),
+            Role = "admin",
+            AuthProvider = "Email",
+            EmailVerified = true
+        };
+
+        db.Users.Add(admin);
+        Console.WriteLine("Default admin account created.");
+    }
+    else
+    {
+        admin.FullName = string.IsNullOrWhiteSpace(admin.FullName)
+            ? "Administrator"
+            : admin.FullName;
+        admin.Password = BCrypt.Net.BCrypt.HashPassword(adminPassword);
+        admin.Role = "admin";
+        admin.AuthProvider = "Email";
+        admin.EmailVerified = true;
+
+        Console.WriteLine("Default admin account updated.");
+    }
+
+    db.SaveChanges();
 }
 
 app.Run();
+
+static string ResolveJwtSigningKey(
+    IConfiguration configuration,
+    IWebHostEnvironment environment)
+{
+    // JWT key flow: value must come from user-secrets locally or environment/app settings in hosting.
+    // JWT key flow: local lo user-secrets nundi, hosting lo environment/app settings nundi key ravali.
+    var configuredKey = configuration["Jwt:Key"];
+
+    if (!string.IsNullOrWhiteSpace(configuredKey))
+    {
+        return configuredKey;
+    }
+
+    throw new InvalidOperationException(
+        environment.IsDevelopment()
+            ? "Jwt:Key is not configured. Add it to this project's user-secrets secrets.json."
+            : "Jwt:Key is not configured. Set Jwt__Key in Azure App Service configuration.");
+}
+
+static void ApplyFrontendCorsHeaders(
+    HttpContext context,
+    string[] allowedFrontendOrigins)
+{
+    var requestOrigin = context.Request.Headers.Origin.ToString();
+
+    if (string.IsNullOrWhiteSpace(requestOrigin))
+    {
+        return;
+    }
+
+    var normalizedOrigin = requestOrigin.Trim().TrimEnd('/');
+    var isAllowed =
+        allowedFrontendOrigins.Contains(
+            normalizedOrigin,
+            StringComparer.OrdinalIgnoreCase);
+
+    if (!isAllowed)
+    {
+        return;
+    }
+
+    context.Response.Headers["Access-Control-Allow-Origin"] = requestOrigin;
+    context.Response.Headers["Vary"] = "Origin";
+}
