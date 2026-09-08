@@ -1,4 +1,3 @@
-cat > JBP/Program.cs << 'ENDOFFILE'
 using JBP.Data;
 using JBP.Services;
 using JBP.Models;
@@ -17,11 +16,14 @@ const string FrontendCorsPolicy = "VistaJobsFrontend";
 
 if (builder.Environment.IsDevelopment())
 {
+    // Local secrets flow: load values from %APPDATA%\Microsoft\UserSecrets\<UserSecretsId>\secrets.json.
+    // Local secrets flow: secret.json lo unna local values ikkada app configuration loki load avtayi.
     builder.Configuration.AddUserSecrets<Program>(optional: true, reloadOnChange: true);
 }
 
 var jwtSigningKey = ResolveJwtSigningKey(builder.Configuration, builder.Environment);
 
+// API controllers are used by the static frontend and Swagger UI.
 builder.Services.AddControllers();
 builder.Services.AddRateLimiter(options =>
 {
@@ -32,6 +34,7 @@ builder.Services.AddRateLimiter(options =>
     });
 });
 
+// Shared services used by application and verification flows.
 builder.Services.AddScoped<EmailService>();
 builder.Services.Configure<DigiLockerOptions>(
     builder.Configuration.GetSection("DigiLocker"));
@@ -42,6 +45,8 @@ builder.Services.AddScoped<VerificationService>();
 builder.Services.AddHttpClient();
 builder.Services.AddHttpClient<IEpfoVerificationProvider, SurepassEpfoProvider>();
 
+// JWT is the main login/session mechanism.
+// Frontend sends this token as: Authorization: Bearer <token>.
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -49,10 +54,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             new TokenValidationParameters
             {
                 ValidateIssuer = true,
+
                 ValidateAudience = true,
+
                 ValidateLifetime = true,
+
                 ValidateIssuerSigningKey = true,
+
                 ClockSkew = TimeSpan.Zero,
+                
 
                 ValidIssuer =
                     builder.Configuration["Jwt:Issuer"],
@@ -69,40 +79,53 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
+    // Swagger can call secured APIs when the tester pastes the login token here.
     options.AddSecurityDefinition(
         "Bearer",
         new OpenApiSecurityScheme
         {
             Name = "Authorization",
+
             Type = SecuritySchemeType.Http,
+
             Scheme = "bearer",
+
             BearerFormat = "JWT",
+
             In = ParameterLocation.Header,
-            Description = "Enter JWT Token"
+
+            Description =
+                "Enter JWT Token"
         });
 
-    options.AddSecurityRequirement(
-        new OpenApiSecurityRequirement
-        {
+options.AddSecurityRequirement(
+    new OpenApiSecurityRequirement
+    {
+            {
+                new OpenApiSecurityScheme
                 {
-                    new OpenApiSecurityScheme
-                    {
-                        Reference =
-                            new OpenApiReference
-                            {
-                                Type = ReferenceType.SecurityScheme,
-                                Id = "Bearer"
-                            }
-                    },
-                    Array.Empty<string>()
-                }
-        });
+                    Reference =
+                        new OpenApiReference
+                        {
+                            Type =
+                                ReferenceType.SecurityScheme,
+
+                            Id = "Bearer"
+                        }
+                },
+
+                Array.Empty<string>()
+            }
+    });
 });
+
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// CORS flow: allow the static frontend to call this API from local dev and Azure Static Apps.
+// CORS flow: local frontend mariyu Azure Static Apps nundi API calls allow chestundi.
 var configuredFrontendOrigins =
     builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
     ?? Array.Empty<string>();
@@ -112,7 +135,7 @@ var allowedFrontendOrigins =
     {
         "http://127.0.0.1:5500",
         "http://localhost:5500",
-        "https://vistajobs-a6cyb2hkfee0defr.centralindia-01.azurewebsites.net/"
+        "https://thankful-rock-0c403ba00.7.azurestaticapps.net"
     }
     .Concat(configuredFrontendOrigins)
     .Where(origin => !string.IsNullOrWhiteSpace(origin))
@@ -130,9 +153,10 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod();
     });
 });
-
 var app = builder.Build();
 
+// Error/CORS safety net: even failed API responses must be readable by the allowed frontend.
+// Error/CORS safety net: API lo error vachina frontend ki readable response ravadaniki headers add chestundi.
 app.Use(async (context, next) =>
 {
     try
@@ -156,6 +180,7 @@ app.Use(async (context, next) =>
     }
 });
 
+// Configure middleware and endpoints (outside any DI scope)
 app.UseSwagger();
 app.UseSwaggerUI();
 
@@ -171,6 +196,8 @@ app.Use(async (context, next) =>
     await next();
 });
 
+
+// Resume uploads are stored outside the frontend folder and exposed as /Uploads/<file>.
 var uploadsPath =
     Path.Combine(app.Environment.ContentRootPath, "Uploads");
 
@@ -186,27 +213,12 @@ app.UseStaticFiles(new StaticFileOptions
 });
 
 app.UseAuthentication();
+
 app.UseAuthorization();
 
 app.MapControllers();
 
-// Serve Frontend folder
-app.UseDefaultFiles(new DefaultFilesOptions
-{
-    FileProvider = new PhysicalFileProvider(
-        Path.Combine(app.Environment.ContentRootPath, "Frontend")),
-    RequestPath = "/Frontend"
-});
-
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new PhysicalFileProvider(
-        Path.Combine(app.Environment.ContentRootPath, "Frontend")),
-    RequestPath = "/Frontend"
-});
-
-app.MapGet("/", () => Results.Redirect("/Frontend/index.html"));
-
+// Local diagnostics endpoint for checking whether EF migrations are applied.
 app.MapGet("/__migrations", async (ApplicationDbContext db) =>
 {
     var applied = await Task.Run(() => db.Database.GetAppliedMigrations());
@@ -214,10 +226,13 @@ app.MapGet("/__migrations", async (ApplicationDbContext db) =>
     return Results.Ok(new { applied = applied.ToList(), pending = pending.ToList() });
 });
 
+// Admin user creation on startup - use a short-lived scope only for seeding.
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
+    // Admin seed flow: ensure the default administrator can always log in after startup.
+    // Admin seed flow: app start ayyaka default admin login ready ga undela create/update chestundi.
     const string adminEmail = "karthikeya.k@vistawaystech.com";
     const string adminPassword = "Admin@123";
 
@@ -261,6 +276,8 @@ static string ResolveJwtSigningKey(
     IConfiguration configuration,
     IWebHostEnvironment environment)
 {
+    // JWT key flow: value must come from user-secrets locally or environment/app settings in hosting.
+    // JWT key flow: local lo user-secrets nundi, hosting lo environment/app settings nundi key ravali.
     var configuredKey = configuration["Jwt:Key"];
 
     if (!string.IsNullOrWhiteSpace(configuredKey))
@@ -299,4 +316,3 @@ static void ApplyFrontendCorsHeaders(
     context.Response.Headers["Access-Control-Allow-Origin"] = requestOrigin;
     context.Response.Headers["Vary"] = "Origin";
 }
-ENDOFFILE
