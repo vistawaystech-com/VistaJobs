@@ -71,14 +71,14 @@ jobs:
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: vistajobs
+          app-name: vistajobsportal
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: ./publish
 
       - name: Deployment Summary
         run: |
           echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- App Service: vistajobs-app" >> $GITHUB_STEP_SUMMARY
+          echo "- App Service: vistajobsportal-app" >> $GITHUB_STEP_SUMMARY
           echo "- Environment: Production" >> $GITHUB_STEP_SUMMARY
           echo "- Deployment: Successful" >> $GITHUB_STEP_SUMMARY
 
@@ -92,7 +92,7 @@ jobs:
       - name: Pipeline Summary
         run: |
           echo "## Pipeline Completed" >> $GITHUB_STEP_SUMMARY
-          echo "- Workflow: VistaJobs CI/CD" >> $GITHUB_STEP_SUMMARY
+          echo "- Workflow: vistajobsportal CI/CD" >> $GITHUB_STEP_SUMMARY
           echo "- Branch: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "- Triggered By: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
