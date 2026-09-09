@@ -1,4 +1,4 @@
-name: VistaJobs API CI/CD
+name: vistajobsportal API CI/CD
 
 on:
   push:
@@ -30,6 +30,6 @@ jobs:
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v3
         with:
-          app-name: vistajobs-api
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          app-name: vistajobsportal
+         publish-profile: ${{ secrets.AZURE_VISTA_JOBS_PORTAL }}
           package: ./publish
