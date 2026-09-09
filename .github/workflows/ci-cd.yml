@@ -72,13 +72,13 @@ jobs:
         uses: azure/webapps-deploy@v3
         with:
           app-name: vistajobsportal
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+       publish-profile: ${{ secrets.AZURE_VISTA_JOBS_PORTAL }}
           package: ./publish
 
       - name: Deployment Summary
         run: |
           echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- App Service: vistajobsportal-app" >> $GITHUB_STEP_SUMMARY
+          echo "- App Service: vistajobsportal" >> $GITHUB_STEP_SUMMARY
           echo "- Environment: Production" >> $GITHUB_STEP_SUMMARY
           echo "- Deployment: Successful" >> $GITHUB_STEP_SUMMARY
 
