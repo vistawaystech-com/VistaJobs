@@ -41,6 +41,10 @@ jobs:
       - name: Publish
         run: dotnet publish JBP/JBP.csproj --configuration Release --no-build --output ./publish
 
+      - name: Copy Frontend to wwwroot
+        run: |
+          mkdir -p ./publish/wwwroot
+          cp -r JBP/Frontend/. ./publish/wwwroot/
       - name: Upload Publish Artifact
         uses: actions/upload-artifact@v4
         with:

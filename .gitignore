@@ -1,1 +1,6 @@
 vistajobs
+
+# Build and publish outputs
+**/bin/
+**/obj/
+publish/
