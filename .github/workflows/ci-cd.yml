@@ -1,4 +1,4 @@
-name: VistaJobs CI/CD
+name: vistajobsportal 
 
 on:
   push:
@@ -11,6 +11,7 @@ on:
       - main
 
 jobs:
+
   build:
     name: Build & Publish
     runs-on: ubuntu-latest
@@ -55,44 +56,48 @@ jobs:
           echo "- Author: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
           echo "- Build: Successful" >> $GITHUB_STEP_SUMMARY
 
- deploy:
-  name: Deploy to Azure App Service
-  runs-on: ubuntu-latest
-  needs: build
-  if: github.ref == 'refs/heads/main'
 
-  steps:
-    - name: Download Publish Artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: app
-        path: ./publish
+  deploy:
+    name: Deploy to Azure App Service
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
 
-    - name: Deploy to Azure Web App
-      uses: azure/webapps-deploy@v3
-      with:
-        app-name: vistajobsportal
-        publish-profile: ${{ secrets.AZURE_VISTA_JOBS_PORTAL }}
-        package: ./publish
+    steps:
+      - name: Download Publish Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app
+          path: ./publish
 
-    - name: Deployment Summary
-      run: |
-        echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
-        echo "- App Service: vistajobsportal" >> $GITHUB_STEP_SUMMARY
-        echo "- Environment: Production" >> $GITHUB_STEP_SUMMARY
-        echo "- Deployment: Successful" >> $GITHUB_STEP_SUMMARY
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: vistajobsportal
+          publish-profile: ${{ secrets.AZURE_VISTA_JOBS_PORTAL }}
+          package: ./publish
+
+      - name: Deployment Summary
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- App Service: vistajobsportal" >> $GITHUB_STEP_SUMMARY
+          echo "- Environment: Production" >> $GITHUB_STEP_SUMMARY
+          echo "- Deployment: Successful" >> $GITHUB_STEP_SUMMARY
+
 
   notify:
     name: Notify Team
     runs-on: ubuntu-latest
-    needs: [build, deploy]
+    needs:
+      - build
+      - deploy
     if: always()
 
     steps:
       - name: Pipeline Summary
         run: |
           echo "## Pipeline Completed" >> $GITHUB_STEP_SUMMARY
-          echo "- Workflow: vistajobsportal CI/CD" >> $GITHUB_STEP_SUMMARY
+          echo "- Workflow: VistaJobs CI/CD" >> $GITHUB_STEP_SUMMARY
           echo "- Branch: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "- Triggered By: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
