@@ -2,7 +2,7 @@
 // API routing: local frontend uses the local Visual Studio API; deployed frontend uses Azure API.
 // API routing: local frontend local API ni vadutundi; deployed frontend Azure API ni vadutundi.
 const LOCAL_API_BASE_URL = "https://localhost:7250/api";
-const AZURE_API_BASE_URL = "https://vistajobs-api-aqahcnabazbzf8hz.centralindia-01.azurewebsites.net/api";
+const AZURE_API_BASE_URL = "/api";
 const API_BASE_URL =
     ["localhost", "127.0.0.1"].includes(window.location.hostname)
         ? LOCAL_API_BASE_URL
