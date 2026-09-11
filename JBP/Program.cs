@@ -133,9 +133,10 @@ var configuredFrontendOrigins =
 var allowedFrontendOrigins =
     new[]
     {
-        "http://127.0.0.1:5500",
+        " p://127.0.0.1:5500",
         "http://localhost:5500",
-        "https://thankful-rock-0c403ba00.7.azurestaticapps.net"
+       // "https://thankful-rock-0c403ba00.7.azurestaticapps.net"
+        "https://vistajobsdbserver.database.windows.net"
     }
     .Concat(configuredFrontendOrigins)
     .Where(origin => !string.IsNullOrWhiteSpace(origin))

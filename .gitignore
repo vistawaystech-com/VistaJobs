@@ -1,6 +1,22 @@
+<<<<<<< HEAD
+.vs/
+bin/
+obj/
+node_modules/
+*.user
+*.suo
+*.cache
+*.pdb
+
+JBP/appsettings.Development.json
+.sonarqube/
+**/.sonarqube/
+vistajobs
+=======
 vistajobs
 
 # Build and publish outputs
 **/bin/
 **/obj/
 publish/
+>>>>>>> 525688f743a6f4f47ff98eb66ab1a582e1c17671

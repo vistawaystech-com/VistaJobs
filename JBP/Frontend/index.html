@@ -39,7 +39,7 @@
         </div>
     </nav>
 
-    <!-- Mobile nav -->
+    <!-- Mobile nav --> 
     <div class="nav-mobile" id="navMobile">
         <button class="nav-link" onclick="showPage('home')">🏠 Home</button>
         <button class="nav-link" onclick="showPage('register')">Register</button>
@@ -67,8 +67,18 @@
                 <h2 id="home-links-title">Let’s build the next step of your career.</h2>
                 <p class="home-links-copy">Learn what we stand for or reach out to our team. These pages are ready for you to personalise with your own details.</p>
                 <div class="home-link-grid">
-                    <a class="home-link-card" href="about.html"><<h3>About Us</h3><p>Our story, purpose, and the people behind VistaJobs.</p><span class="home-link-action">Explore our story <b>→</b></span></a>
-                    <a class="home-link-card" href="contact.html">;<h3>Contact Us</h3><p>Questions, feedback, or partnership ideas — we’d love to hear them.</p><span class="home-link-action">Get in touch <b>→</b></span></a>
+                    <a class="home-link-card" href="about.html">
+                        <h3>About Us</h3>
+                        <p>Our story, purpose, and the people behind VistaJobs.</p>
+                        <span class="home-link-action">Explore our story <b>→</b></span>
+                    </a>
+                    <a class="home-link-card" href="contact.html">
+                        <h3>Contact Us</h3>
+                        <p>Questions, feedback, or partnership ideas — we’d love to hear them.</p>
+                        <span class="home-link-action">Get in touch 
+
+                        </span>
+                    </a>
                 </div>
             </div>
         </section>
@@ -142,14 +152,30 @@
                                    maxlength="10" />
                         </div>
 
+
                         <div class="form-group">
+    <label for="dob-text">Date of Birth (DD/MM/YYYY):</label>
+    <input 
+        type="text" 
+        id="dob-text" 
+        name="dob-text" 
+        placeholder="DD/MM/YYYY" 
+        pattern="\d{2}/\d{2}/\d{4}" 
+        title="Please enter your DOB in DD/MM/YYYY format"
+        maxlength="10"
+    >
+</div>
+
+                        <!-- <div class="form-group">
                             <label for="f-dob">
-                                DOB <span class="req">*</span>
+                                Date Of Birth <span class="req">*</span>
                             </label>
 
+                            <input type="date" id="dob" name="dob"/>
+
                             <input type="date"
-                                   id="f-dob" />
-                        </div>
+                                   id="f-dob" /> 
+                        </div> -->
 
                     </div>
 
