@@ -204,6 +204,7 @@ var uploadsPath =
 
 Directory.CreateDirectory(uploadsPath);
 
+app.UseDefaultFiles();
 app.UseStaticFiles();
 
 app.UseStaticFiles(new StaticFileOptions
