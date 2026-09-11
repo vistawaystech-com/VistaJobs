@@ -15,7 +15,9 @@ const GOOGLE_CLIENT_ID = "280183771546-5q3kn4tsh1pt511ea9928pd01nq5ppgp.apps.goo
 // Google flow: Google OAuth client lo allow chesina origins lo matrame button start avuthundi.
 const GOOGLE_AUTH_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5500",
-    "http://localhost:5500"
+    "http://localhost:5500",
+    "https://vistajobsportal-b7dqcjgufhakgman.centralindia-01.azurewebsites.net"
+
 ];
 let registerOtpSent = false;
 let loginOtpSent = false;
